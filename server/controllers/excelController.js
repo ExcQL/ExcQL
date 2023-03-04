@@ -1,4 +1,3 @@
-const { json } = require('stream/consumers');
 const xlsx = require('xlsx'); // xlsx read/write parser
 
 const excelController = {};
@@ -15,9 +14,8 @@ excelController.read = async (req, res, next) => {
     var jsonData = xlsx.utils.sheet_to_json(excelObj, {
       header: 0,
       defval: '',
-      dateNF: 'mm"."dd"."yyyy',
     });
-
+    console.log(jsonData);
     res.locals.parsedXlsxToJSON = jsonData;
     return next();
   } catch (error) {
