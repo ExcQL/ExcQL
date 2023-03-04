@@ -459,6 +459,37 @@ excelController.getDataTypes = async (req, res, next) => {
     director: ["George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas"],
     producer: ["Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum"],
     release_date: ["5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/2005"]
+  };
+
+  const getColType = () => {
+    // if any piece of data is a string, set to varchar and exit
+    // if there are conflicting data types, set to varchar and exit
+    // if data is all numbers, check against floor -> if all nums === their floor, int, else float
+    // if data is all t/f, bool
+
+    let tempType;
+    let numType;
+    for (let val of col) {
+      const currType = typeof val;
+      if (currType === 'string') {
+        return 'varchar';
+      } else if (currType !== tempType) {
+        return 'varchar';
+      } else if (currType === 'number') {
+        tempType = 'number';
+        if (numType != 'float' && val === Math.floor(val)) {
+          numType = 'integer';
+        } else { numType = 'float'; }
+      } else if (currType === 'boolean') {
+        tempType = 'boolean';
+      }
+    }
+
+    return tempType;
+  }
+
+  for (let col in inputCols) {
+    const type = getColType();
   }
 }
 
@@ -500,8 +531,7 @@ excelController.tableLogic = async (req, res, next) => {
     if no -> break into subsets of unique combinations and ??
   */
 
-  /*
-  OUTPUT:
+  /*  OUTPUT:
   {
     table1Name: {
       column1Name: {primaryKey: true, type: "number"},
