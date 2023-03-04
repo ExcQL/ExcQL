@@ -1,0 +1,4 @@
+.canvas {
+  background-color: var(--canvas-bg);
+  height: calc(100vh - 10%);
+}
