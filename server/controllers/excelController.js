@@ -2,13 +2,15 @@ const xlsx = require('xlsx'); // xlsx read/write parser
 
 const excelController = {};
 excelController.read = async (req, res, next) => {
+  console.log('entering excelController.read')
   try {
     // When passed in data comes from multer, it is stored on req.files
     const { buffer } = req.files[0];
     console.log('BUFFER:', buffer);
     //Read the buffer and access the data.
     console.log(xlsx.read(buffer).Sheets.Sheet1);
-    res.json({ message: 'From excelController' });
+    // res.json({ message: 'From excelController' });
+    return next();
   } catch (error) {
     return next({
       log: `Controller error in excelController.read: ${error}`,
@@ -19,9 +21,9 @@ excelController.read = async (req, res, next) => {
 };
 
 excelController.convertInputs = async (req, res, next) => {
-  /*
-  need to write logic to do these conversions
-  */
+  console.log('entering excelController.convertInputs')
+
+  // replace with Brian's inputs
 
   try {
     res.locals.inputRows = [
@@ -435,6 +437,8 @@ excelController.convertInputs = async (req, res, next) => {
 }
 
 excelController.getDataTypes = async (req, res, next) => {
+  console.log('entering excelController.getDataTypes')
+
   // traverse values in each col to deduce sql data type
 
   // switch this to res.locals.inputCols
@@ -461,39 +465,72 @@ excelController.getDataTypes = async (req, res, next) => {
     release_date: ["5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/2005"]
   };
 
-  const getColType = () => {
-    // if any piece of data is a string, set to varchar and exit
-    // if there are conflicting data types, set to varchar and exit
-    // if data is all numbers, check against floor -> if all nums === their floor, int, else float
-    // if data is all t/f, bool
+  try {
+    res.locals.colTypes = {};
 
-    let tempType;
-    let numType;
-    for (let val of col) {
-      const currType = typeof val;
-      if (currType === 'string') {
-        return 'varchar';
-      } else if (currType !== tempType) {
-        return 'varchar';
-      } else if (currType === 'number') {
-        tempType = 'number';
-        if (numType != 'float' && val === Math.floor(val)) {
-          numType = 'integer';
-        } else { numType = 'float'; }
-      } else if (currType === 'boolean') {
-        tempType = 'boolean';
+    const getColType = (colArr) => {
+      // if data can coerce to date, date
+      // if any piece of data is a string, set to varchar and exit
+      // if there are conflicting data types, set to varchar and exit
+      // if data is all numbers, check against floor -> if all nums === their floor, int, else float
+      // if data is all t/f, bool
+
+      let tempType;
+      let numType;
+      for (let val of colArr) {
+        let currType;
+
+        // get type of current data point
+        if (!isNaN(Number(val))) currType = 'number';
+        else if (Date.parse(val)) currType = 'date';
+        else if (
+          typeof val === 'boolean'
+          || val === 'true'
+          || val === 'false') currType = 'boolean';
+        else currType = 'string';
+
+        // compare to tempType (set in previous iterations of switch statement below)
+        // if there are discrepancies default to string (varchar)
+        if (tempType && currType !== tempType) return 'varchar';
+
+        // further logic per type
+        switch (currType) {
+          case 'string':
+            return 'varchar';
+          case 'number':
+            tempType = 'number';
+            if (numType != 'float' && val === Math.floor(val)) {
+              numType = 'integer';
+            } else { numType = 'float' }
+            break;
+          default:
+            tempType = currType;
+        };
       }
+
+      if (tempType === 'number') return numType;
+      return tempType;
     }
 
-    return tempType;
-  }
+    for (let col in inputCols) {
+      res.locals.colTypes[col] = getColType(inputCols[col]);
+    }
 
-  for (let col in inputCols) {
-    const type = getColType();
+    res.json(res.locals.colTypes)
+
+    // return next()
+  } catch (error) {
+    return next({
+      log: `Controller error in excelController.getDataTypes: ${error}`,
+      status: 400,
+      message: { err: error },
+    });
   }
 }
 
 excelController.countValues = async (req, res, next) => {
+  console.log('entering excelController.countValues')
+
   // get number of unique vals in each col
 
   // switch this to res.locals.inputCols
@@ -519,9 +556,16 @@ excelController.countValues = async (req, res, next) => {
     producer: ["Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum"],
     release_date: ["5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/2005"]
   }
+
+  for (let col in inputCols) {
+    const set = new Set(inputCols[col]);
+    const uniqueVals = set.size;
+  }
 }
 
 excelController.tableLogic = async (req, res, next) => {
+  console.log('entering excelController.tableLogic')
+
   /*
   start to put logic together to figure out where breaking points are for each table
   rough idea: 
@@ -534,20 +578,20 @@ excelController.tableLogic = async (req, res, next) => {
   /*  OUTPUT:
   {
     table1Name: {
-      column1Name: {primaryKey: true, type: "number"},
-      column2Name: "string",
-      column3Name: "number",
-      column4Name: "boolean",
-      column5Name: {linkedTable: table2Name, type: "number"}
+      column1Name: {primaryKey: true, type: “number”},
+      column2Name: “string”,
+      column3Name: “number”,
+      column4Name: “boolean”,
+      column5Name: {linkedTable: table2Name.column2Name, type: “number”}
     },
     table2Name: {
-      column1Name: {primaryKey: true, type: "number"},
-      column2Name: "string"
+      column1Name: {primaryKey: true, type: “number”},
+      column2Name: “string”
     }
   }
   
   in this example column 1 is the primary key for table 1, and it links to table
-  2's primary key (table 2 col 1) via the foreign key stored in column 5
+  2's second column via the foreign key stored in column 5
   */
 }
 
