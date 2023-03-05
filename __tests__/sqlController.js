@@ -17,6 +17,7 @@ describe('SQL Query generation unit tests', () => {
     };
 
     it('generates query', () => {
+        // TODO: add expects
         console.log(composeSqlQuery(sampleInput));
     })
 })
