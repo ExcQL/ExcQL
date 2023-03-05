@@ -5,9 +5,21 @@ import { RiFolderUploadFill } from 'react-icons/ri';
 import './InfoPanel.css';
 
 const InfoPanel = () => {
-  const uploadExcelHandler = (e) => {
+  const uploadExcelHandler = async (e) => {
     e.preventDefault();
-    console.log(`File was sent!`);
+
+    const files = e.target.files.files;
+    const excelFile = new FormData();
+    excelFile.append('excel', files[0]);
+    // console.log(excelFile);
+
+    //SPECIFIC BACKEND ENDPOINT NEEDED TO MAKE PASSING REQUEST
+    const response = await fetch(`https://jsonplaceholder.typicode.com/posts`, {
+      method: 'POST',
+      body: excelFile,
+    });
+    const data = await response.json();
+    console.log(data);
   };
 
   return (
@@ -26,8 +38,8 @@ const InfoPanel = () => {
         className="info-panel__upload-form"
         onSubmit={uploadExcelHandler}
       >
-        <label class="upload-form--container">
-          <input type="file" />
+        <label className="upload-form--container">
+          <input type="file" id="files" name="files" />
           <RiFolderUploadFill className="info-panel__upload-icon" />
         </label>
         <button type="submit" className="info-panel__upload-btn">

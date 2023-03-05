@@ -17,7 +17,10 @@
   --nav-text-color: #f8f1ff;
 
   /* HEADING FONT */
-  --heading-font-fam: 'Mynerve'
+  --heading-font-fam: 'Mynerve';
+
+  /* DESCRIPTION FONT */
+  --description-font: 'Neuton';
 
   /* MISC */
   --light-purple: #decdf5;

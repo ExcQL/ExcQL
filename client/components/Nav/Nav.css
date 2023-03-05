@@ -20,3 +20,7 @@
 .nav__diagram:hover {
   border-bottom: 1px solid var(--nav-text-color);
 }
+
+.nav__active-tab {
+  border-bottom: 1px solid var(--nav-text-color);
+}
