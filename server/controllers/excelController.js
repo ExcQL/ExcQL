@@ -1,8 +1,10 @@
 const xlsx = require('xlsx'); // xlsx read/write parser
 const Iter = require('es-iter'); // tool for calculating combinations
+
 const excelController = {};
 
 excelController.read = async (req, res, next) => {
+  console.log('entering excelController.read');
   try {
     // Create an empty object so we can store multiple sheets in our res.locals
     // if necessary.
