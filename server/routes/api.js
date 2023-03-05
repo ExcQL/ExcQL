@@ -12,7 +12,9 @@ router.post('/',
   parse.any(),
   excelController.read,
   excelController.convertInputs,
-  excelController.getDataTypes
+  excelController.getDataTypes,
+  // excelController.countValues
+  excelController.tableLogic
 );
 router.patch('/', (req, res) => { });
 router.delete('/', (req, res) => { });
