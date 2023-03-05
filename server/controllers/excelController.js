@@ -43,30 +43,20 @@ excelController.read = async (req, res, next) => {
 
 excelController.convertInputs = async (req, res, next) => {
   console.log('entering excelController.convertInputs');
-  const rawDataOfCombinedFinal = res.locals.raw['combined final'];
   try {
-    const inputRows = res.locals.inputRows;
     const inputCols = {};
-    for (const dataPoint in rawDataOfCombinedFinal) {
-      // Datapoints have a key value of letterNumber (A1)
-      // We slice here from positon 1 and coerce the string version
-      // of the number to become a number
-      // Slight note here, we will have to change the method of finding the
-      // number slightly since after Z columns, they show up as AA and on
-      const currRowNumber = +dataPoint.slice(1, dataPoint.length);
-      if (currRowNumber === 1) {
-        // Column names will only come from row numbers equal to 1
-        // These are column names initialized to an empty array
-        inputCols[rawDataOfCombinedFinal[dataPoint].w] = [];
-      } else break;
+    // Add Corresponding keys to the inputCols for each column found in inputRows
+    for (const column in res.locals.inputRows[0]) {
+      inputCols[column] = [];
     }
+    // Tranpose the data so that we have each data point for each column
     // Iterate through our inputRows => This is an array of objects for each row
     // Iterate through each property in the object and for matching column strings
     // push the value into our input columns corresponding array
-    // arrOfColumns
-    for (const row of inputRows) {
-      for (const column in row) {
-        inputCols[column].push(row[column]);
+    for (const column of res.locals.inputRows) {
+      for (const key in column) {
+        if (key === 'release_date') inputCols[key].push(column[key] + ' ');
+        else inputCols[key].push(column[key]);
       }
     }
     res.locals.inputCols = inputCols;
@@ -79,13 +69,14 @@ excelController.convertInputs = async (req, res, next) => {
     });
   }
 };
-
 excelController.getDataTypes = async (req, res, next) => {
   console.log('entering excelController.getDataTypes');
+  // console.log(res.locals.inputCols['release_date']);
   // traverse values in each col to deduce sql data type
   // switch this to res.locals.inputCols
   try {
     res.locals.colTypes = {};
+
     const getColType = (colArr) => {
       // if data can coerce to date, date
       // if any piece of data is a string, set to varchar and exit
@@ -130,10 +121,10 @@ excelController.getDataTypes = async (req, res, next) => {
       return tempType;
     };
 
-    for (let col in inputCols) {
-      res.locals.colTypes[col] = getColType(inputCols[col]);
+    for (let col in res.locals.inputCols) {
+      res.locals.colTypes[col] = getColType(res.locals.inputCols[col]);
     }
-
+    console.log(res.locals.colTypes);
     // res.json(res.locals.colTypes)
 
     return next();
