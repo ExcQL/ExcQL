@@ -537,59 +537,50 @@ excelController.getDataTypes = async (req, res, next) => {
   }
 }
 
-// excelController.countValues = async (req, res, next) => {
-//   console.log('entering excelController.countValues')
+excelController.countValues = async (req, res, next) => {
+  console.log('entering excelController.countValues')
 
-//   // get number of unique vals in each col
+  // get number of unique vals in each col
 
-//   // switch this to res.locals.inputCols
-//   inputCols = {
-//     name: ["Luke Skywalker", "Luke Skywalker", "C-3PO", "C-3PO", "C-3PO", "C-3PO", "R2-D2", "R2-D2", "R2-D2", "R2-D2", "Darth Vader", "Darth Vader", "Leia Organa", "Leia Organa", "Owen Lars", "Owen Lars", "Owen Lars"],
-//     mass: [77, 77, 75, 75, 75, 75, 32, 32, 32, 32, 136, 136, 49, 49, 120, 120, 120],
-//     hair_color: ["blond", "blond", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "none", "none", "brown", "brown", "brown, grey", "brown, grey", "brown, grey"],
-//     skin_color: ["fair", "fair", "gold", "gold", "gold", "gold", "white, blue", "white, blue", "white, blue", "white, blue", "white", "white", "light", "light", "light", "light", "light"],
-//     eye_color: ["blue", "blue", "yellow", "yellow", "yellow", "yellow", "red", "red", "red", "red", "yellow", "yellow", "brown", "brown", "blue", "blue", "blue"],
-//     birth_year: ["19BBY", "19BBY", "112BBY", "112BBY", "112BBY", "112BBY", "33BBY", "33BBY", "33BBY", "33BBY", "41.9BBY", "41.9BBY", "19BBY", "19BBY", "52BBY", "52BBY", "52BBY"],
-//     gender: ["male", "male", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "male", "male", "female", "female", "male", "male", "male"],
-//     height: [172, 172, 167, 167, 167, 167, 96, 96, 96, 96, 202, 202, 150, 150, 178, 178, 178],
-//     name2: ["Human", "Human", "Droid", "Droid", "Droid", "Droid", "Droid", "Droid", "Droid", "Droid", "Human", "Human", "Human", "Human", "Human", "Human", "Human"],
-//     classification: ["mammal", "mammal", "artificial", "artificial", "artificial", "artificial", "artificial", "artificial", "artificial", "artificial", "mammal", "mammal", "mammal", "mammal", "mammal", "mammal", "mammal"],
-//     average_height: [180, 180, "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", 180, 180, 180, 180, 180, 180, 180],
-//     average_lifespan: [120, 120, "indefinite", "indefinite", "indefinite", "indefinite", "indefinite", "indefinite", "indefinite", "indefinite", 120, 120, 120, 120, 120, 120, 120],
-//     hair_colors: ["blonde, brown, black, red", "blonde, brown, black, red", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red"],
-//     skin_colors: ["caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic"],
-//     eye_colors: ["brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber"],
-//     language: ["Galactic Basic", "Galactic Basic", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "Galactic Basic", "Galactic Basic", "Galactic Basic", "Galactic Basic", "Galactic Basic", "Galactic Basic", "Galactic Basic"],
-//     title: ["A New Hope", "Revenge of the Sith", "A New Hope", "Attack of the Clones", "The Phantom Menace", "Revenge of the Sith", "A New Hope", "Attack of the Clones", "The Phantom Menace", "Revenge of the Sith", "A New Hope", "Revenge of the Sith", "A New Hope", "Revenge of the Sith", "A New Hope", "Attack of the Clones", "Revenge of the Sith"],
-//     director: ["George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas"],
-//     producer: ["Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum"],
-//     release_date: ["5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/2005"]
-//   }
+  // switch this to res.locals.inputCols
+  inputCols = {
+    name: ["Luke Skywalker", "Luke Skywalker", "C-3PO", "C-3PO", "C-3PO", "C-3PO", "R2-D2", "R2-D2", "R2-D2", "R2-D2", "Darth Vader", "Darth Vader", "Leia Organa", "Leia Organa", "Owen Lars", "Owen Lars", "Owen Lars"],
+    mass: [77, 77, 75, 75, 75, 75, 32, 32, 32, 32, 136, 136, 49, 49, 120, 120, 120],
+    hair_color: ["blond", "blond", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "none", "none", "brown", "brown", "brown, grey", "brown, grey", "brown, grey"],
+    skin_color: ["fair", "fair", "gold", "gold", "gold", "gold", "white, blue", "white, blue", "white, blue", "white, blue", "white", "white", "light", "light", "light", "light", "light"],
+    eye_color: ["blue", "blue", "yellow", "yellow", "yellow", "yellow", "red", "red", "red", "red", "yellow", "yellow", "brown", "brown", "blue", "blue", "blue"],
+    birth_year: ["19BBY", "19BBY", "112BBY", "112BBY", "112BBY", "112BBY", "33BBY", "33BBY", "33BBY", "33BBY", "41.9BBY", "41.9BBY", "19BBY", "19BBY", "52BBY", "52BBY", "52BBY"],
+    gender: ["male", "male", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "male", "male", "female", "female", "male", "male", "male"],
+    height: [172, 172, 167, 167, 167, 167, 96, 96, 96, 96, 202, 202, 150, 150, 178, 178, 178],
+    name2: ["Human", "Human", "Droid", "Droid", "Droid", "Droid", "Droid", "Droid", "Droid", "Droid", "Human", "Human", "Human", "Human", "Human", "Human", "Human"],
+    classification: ["mammal", "mammal", "artificial", "artificial", "artificial", "artificial", "artificial", "artificial", "artificial", "artificial", "mammal", "mammal", "mammal", "mammal", "mammal", "mammal", "mammal"],
+    average_height: [180, 180, "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", 180, 180, 180, 180, 180, 180, 180],
+    average_lifespan: [120, 120, "indefinite", "indefinite", "indefinite", "indefinite", "indefinite", "indefinite", "indefinite", "indefinite", 120, 120, 120, 120, 120, 120, 120],
+    hair_colors: ["blonde, brown, black, red", "blonde, brown, black, red", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red", "blonde, brown, black, red"],
+    skin_colors: ["caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic", "caucasian, black, asian, hispanic"],
+    eye_colors: ["brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber", "brown, blue, green, hazel, grey, amber"],
+    language: ["Galactic Basic", "Galactic Basic", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "Galactic Basic", "Galactic Basic", "Galactic Basic", "Galactic Basic", "Galactic Basic", "Galactic Basic", "Galactic Basic"],
+    title: ["A New Hope", "Revenge of the Sith", "A New Hope", "Attack of the Clones", "The Phantom Menace", "Revenge of the Sith", "A New Hope", "Attack of the Clones", "The Phantom Menace", "Revenge of the Sith", "A New Hope", "Revenge of the Sith", "A New Hope", "Revenge of the Sith", "A New Hope", "Attack of the Clones", "Revenge of the Sith"],
+    director: ["George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas", "George Lucas"],
+    producer: ["Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Gary Kurtz, Rick McCallum", "Rick McCallum", "Rick McCallum"],
+    release_date: ["5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/1999", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/19/2005", "5/25/1977", "5/16/2002", "5/19/2005"]
+  }
 
-//   res.locals.colUniqueCounts = {}
+  res.locals.colUniqueCounts = {}
 
-//   for (let col in inputCols) {
-//     const set = new Set(inputCols[col]);
-//     const uniqueVals = set.size;
+  for (let col in inputCols) {
+    const set = new Set(inputCols[col]);
+    const uniqueVals = set.size;
 
-//     res.locals.colUniqueCounts[col] = uniqueVals;
-//   }
+    res.locals.colUniqueCounts[col] = uniqueVals;
+  }
 
-//   // res.json(res.locals.colUniqueCounts)
+  // res.json(res.locals.colUniqueCounts)
 
-// }
+}
 
 excelController.tableLogic = async (req, res, next) => {
   console.log('entering excelController.tableLogic')
-
-  /*
-  start to put logic together to figure out where breaking points are for each table
-  rough idea: 
-    compare groups of cols that have the same number of unique values to see if they are complete dups, 
-    i.e., if A, B, and C each have 4 unique values, compare the combined value of A+B+C to confirm if there 
-    are also 4 unique combinations -> if yes, A, B, C are a table
-    if no -> break into subsets of unique combinations and ??
-  */
 
   const cols = Object.keys(res.locals.inputCols);
   const rows = res.locals.inputRows;
@@ -597,22 +588,37 @@ excelController.tableLogic = async (req, res, next) => {
   // get unique combinations of col names using Iter
   // for each set of column names, determine whether there is a unique set of rows within those cols
   // consolidate, i.e., if A-B-C-D go together then A-B-C, A-B, A-C, A-D, B-C.... can be removed
+  // ** this should be done first for time complexity
 
-  const combos = []
+  const nestedCombos = []
   for (i = cols.length + 1; i > 1; i--) {
-    combos.push(new Iter(cols).combinations(i).toArray());
+    nestedCombos.push(new Iter(cols).combinations(i).toArray());
   }
 
-  flatCombos = combos.flat();
-  console.log(flatCombos);
+  combos = nestedCombos.flat();
 
-  res.json(flatCombos.length)
-
-  for (let combo of flatCombos) {
+  for (let combo of combos) {
     for (let row of rows) {
+      const set = new Set;
+      // get a stringified copy of the current row that only includes the col names in the selected combo
+      const rowCopy = JSON.stringify(combo.reduce((newObj, key) => {
+        newObj[key] = row[key];
+        return newObj;
+      }))
 
+      // add copied row to set
+      set.add(rowCopy)
+    }
+
+    // if the number of rows in the set is the same as the number of rows in the spreadsheet, this cannot be a table
+    // if it is less, it may be a table
+    const tables = [];
+    if (set.size !== rows.length) {
+      tables.push(combo)
     }
   }
+
+  res.json(tables);
 
   /*  OUTPUT:
   {
