@@ -26,6 +26,8 @@ excelController.read = async (req, res, next) => {
       res.locals.parsedXlsxToJSON[`${sheet}`] = jsonData;
       //console.log(res.locals.parsedXlsxToJSON['INSERT_SHEET_NAME_HERE']);
     }
+
+    res.locals.inputRows = res.locals.parsedXlsxToJSON['combined final'];
     return next();
   } catch (error) {
     return next({
@@ -1264,12 +1266,13 @@ excelController.tableLogic = async (req, res, next) => {
   // consolidate, i.e., if A-B-C-D go together then A-B-C, A-B, A-C, A-D, B-C.... can be removed
   // ** this should be done first for time complexity
 
-  const combos = [];
-  for (i = cols.length + 1; i > 1; i--) {
+  const nestedCombos = [];
+  // for (i = cols.length + 1; i > 1; i--) {
+  for (i = 2; i < cols.length + 1; i++) {
     nestedCombos.push(new Iter(cols).combinations(i).toArray());
   }
 
-  combos = nestedCombos.flat();
+  const combos = nestedCombos.flat();
   const tables = [];
 
   for (let combo of combos) {
@@ -1290,6 +1293,8 @@ excelController.tableLogic = async (req, res, next) => {
     if (set.size !== rows.length) {
       tables.push(combo)
     }
+
+    // ****additional filtering of possible tables definitely needed*** 
   }
 
   console.log(tables)
