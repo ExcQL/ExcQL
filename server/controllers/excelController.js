@@ -596,29 +596,30 @@ excelController.tableLogic = async (req, res, next) => {
   }
 
   combos = nestedCombos.flat();
+  const tables = [];
 
   for (let combo of combos) {
+    const set = new Set;
+
     for (let row of rows) {
-      const set = new Set;
       // get a stringified copy of the current row that only includes the col names in the selected combo
-      const rowCopy = JSON.stringify(combo.reduce((newObj, key) => {
-        newObj[key] = row[key];
-        return newObj;
-      }))
+      const rowCopy = JSON.stringify(combo.reduce((newRow, key) =>
+        (newRow[key] = row[key], newRow)
+        , {}));
 
       // add copied row to set
-      set.add(rowCopy)
+      set.add(rowCopy);
     }
 
     // if the number of rows in the set is the same as the number of rows in the spreadsheet, this cannot be a table
     // if it is less, it may be a table
-    const tables = [];
     if (set.size !== rows.length) {
       tables.push(combo)
     }
   }
 
-  res.json(tables);
+  console.log(tables)
+  res.json(tables.length);
 
   /*  OUTPUT:
   {
