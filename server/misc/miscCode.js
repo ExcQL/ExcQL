@@ -23,9 +23,6 @@ for (const dataPoint in excelObj) {
     }
   }
   // console.log(dataPoint, excelObj[dataPoint]);
-  if (dataPoint === 'A98') {
-    break;
-  }
   // else, we know that we are reading from the first row so we build
   // the properties that will belong in our row object and the array
   // helps us keep track of what data is coming in for the row object
