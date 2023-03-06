@@ -20,8 +20,8 @@ const InfoPanel = () => {
   const uploadExcelHandler = async (e) => {
     try {
       e.preventDefault();
-
       const files = e.target.files.files;
+      if (files.length === 0) throw new Error('No file uploaded.')
       const excelFile = new FormData();
       excelFile.append('excel', files[0]);
 
@@ -49,6 +49,7 @@ const InfoPanel = () => {
       );
       const data = await response.json();
       console.log(data);
+      if (uploadError) setUploadError(false);
     } catch (error) {
       console.error(error);
       setUploadError(true);
@@ -118,17 +119,19 @@ const InfoPanel = () => {
         <span className="info-panel__steps">
           Step 3: Upload the file and watch magic happen!
         </span>
+        <div>
+          {uploadError && (
+            <p className="info-panel__error">
+              Uh oh! 😭 Upload failed. Please try again.
+            </p>
+          )}
+        </div>
         <div className="upload-form--container">
           <button type="submit" className="info-panel__upload-btn">
             Upload!
           </button>
         </div>
       </form>
-      {uploadError && (
-        <p className="info-panel__error">
-          Uh oh! 😭 Upload failed. Please try again.
-        </p>
-      )}
     </section>
   );
 };
