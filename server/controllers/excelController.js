@@ -1249,32 +1249,25 @@ excelController.countValues = async (req, res, next) => {
 excelController.tableLogic = async (req, res, next) => {
   console.log('entering excelController.tableLogic');
 
-  /*
-  start to put logic together to figure out where breaking points are for each table
-  rough idea:
-    compare groups of cols that have the same number of unique values to see if they are complete dups,
-    i.e., if A, B, and C each have 4 unique values, compare the combined value of A+B+C to confirm if there
-    are also 4 unique combinations -> if yes, A, B, C are a table
-    if no -> break into subsets of unique combinations and ??
-  */
-
   const cols = Object.keys(res.locals.inputCols);
   const rows = res.locals.inputRows;
 
   // get unique combinations of col names using Iter
   // for each set of column names, determine whether there is a unique set of rows within those cols
   // consolidate, i.e., if A-B-C-D go together then A-B-C, A-B, A-C, A-D, B-C.... can be removed
-  // ** this should be done first for time complexity
 
-  const nestedCombos = [];
-  // for (i = cols.length + 1; i > 1; i--) {
-  for (i = 2; i < cols.length + 1; i++) {
-    nestedCombos.push(new Iter(cols).combinations(i).toArray());
+  const getCombinations = (input) => {
+    const nestedCombos = [];
+    for (i = 2; i < input.length + 1; i++) {
+      nestedCombos.push(new Iter(input).combinations(i).toArray());
+    }
+
+    const combos = nestedCombos.flat();
+    return combos;
   }
 
-  const combos = nestedCombos.flat();
-  const tables = [];
-
+  const allValidTables = [];
+  const combos = getCombinations(cols);
   for (let combo of combos) {
     const set = new Set;
 
@@ -1289,16 +1282,17 @@ excelController.tableLogic = async (req, res, next) => {
     }
 
     // if the number of rows in the set is the same as the number of rows in the spreadsheet, this cannot be a table
-    // if it is less, it may be a table
+    // if it is less, it may be a tablenpm 
     if (set.size !== rows.length) {
-      tables.push(combo)
+      allValidTables.push(combo);
     }
-
-    // ****additional filtering of possible tables definitely needed*** 
   }
 
-  console.log(tables)
-  res.json(tables.length);
+  const validTableGroups = [];
+  const tableCombos = getCombinations(allValidTables);
+
+  console.log(tableCombos)
+  res.json(tableCombos.length);
 
   /*  OUTPUT:
   {
