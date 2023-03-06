@@ -1,25 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { RiFolderUploadFill } from 'react-icons/ri';
 
 import './InfoPanel.css';
 
 const InfoPanel = () => {
+  const [uploadError, setUploadError] = useState(false);
+
   const uploadExcelHandler = async (e) => {
-    e.preventDefault();
+    try {
+      e.preventDefault();
 
-    const files = e.target.files.files;
-    const excelFile = new FormData();
-    excelFile.append('excel', files[0]);
-    // console.log(excelFile);
+      const files = e.target.files.files;
+      const excelFile = new FormData();
+      excelFile.append('excel', files[0]);
+      //ADDED FOR EXTRA INFO PURPOSES
+      excelFile.append('document', JSON.stringify({ People: 'B9' }));
 
-    //SPECIFIC BACKEND ENDPOINT NEEDED TO MAKE PASSING REQUEST
-    const response = await fetch(`https://jsonplaceholder.typicode.com/posts`, {
-      method: 'POST',
-      body: excelFile,
-    });
-    const data = await response.json();
-    console.log(data);
+      //SPECIFIC BACKEND ENDPOINT NEEDED TO MAKE PASSING REQUEST
+      const response = await fetch(
+        `https://jsonplaceholder.typicode.com/posts`,
+        {
+          method: 'POST',
+          body: excelFile,
+        }
+      );
+      const data = await response.json();
+      console.log(data);
+    } catch (error) {
+      console.error(error);
+      setUploadError(true);
+    }
   };
 
   return (
@@ -33,11 +44,7 @@ const InfoPanel = () => {
         consectetur adipisicing elit. Dolor natus volup tate beatae fugit quidem
         accusamus provident nostrum sequi quas!
       </p>
-      <form
-        action="/test"
-        className="info-panel__upload-form"
-        onSubmit={uploadExcelHandler}
-      >
+      <form className="info-panel__upload-form" onSubmit={uploadExcelHandler}>
         <label className="upload-form--container">
           <input type="file" id="files" name="files" />
           <RiFolderUploadFill className="info-panel__upload-icon" />
@@ -46,6 +53,11 @@ const InfoPanel = () => {
           Upload!
         </button>
       </form>
+      {uploadError && (
+        <p className="info-panel__error">
+          Uh oh! 😭 Upload failed. Please try again.
+        </p>
+      )}
     </section>
   );
 };

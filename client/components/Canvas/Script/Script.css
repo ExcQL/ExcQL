@@ -1,4 +1,30 @@
 .script {
-  background-color: red;
-  height: 100%;
+  /* height: calc(100vh - 10%); */
+}
+
+.script__script-container {
+  margin: 0 auto;
+  margin-top: 10rem;
+  padding: 2rem;
+  width: 55rem;
+  position: relative;
+}
+
+.script__copy-btn {
+  border: none;
+  background-color: transparent;
+  position: absolute;
+  top: 3rem;
+  right: 3rem;
+  cursor: pointer;
+  font-size: 2.4rem;
+  transition: all 0.2s;
+  height: 4rem;
+  width: 4rem;
+  border-radius: 50%;
+}
+
+.script__copy-btn:hover {
+  transform: scale(1.1);
+  background-color: #1b998a3f;
 }
