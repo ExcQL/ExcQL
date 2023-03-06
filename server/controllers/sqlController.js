@@ -1,20 +1,3 @@
-/**
- * Draft expected input:
-  {
-    table1Name: {
-      column1Name: {primaryKey: true, type: “number”},
-      column2Name: “string”,
-      column3Name: “number”,
-      column4Name: “boolean”,
-      column5Name: {linkedTable: table2Name.column1Name, type: “number”}
-    },
-    table2Name: {
-      column1Name: {primaryKey: true, type: “number”},
-      column2Name: “string”
-    }
-  }
- */
-
 const util = require('util');
 const sqlController = {};
 
@@ -26,48 +9,25 @@ const sqlController = {};
  *   NAME VARCHAR(255) NOT NULL
  * );
  */
-const composeSqlQuery = (json) => {
+// See __tests__/sqlController.js for expected input
+const composeSqlQuery = (input) => {
     const outputArray = [];
     const TAB = '\t';
-    Object.keys(json).forEach(entity => {
-        let query = `CREATE TABLE ID NOT EXISTS ${entity} (\n%s);`
-        let tableStringArray = [`_id SERIAL PRIMARY KEY`];
-        const attrObj = json[entity];
-        Object.keys(attrObj).forEach(attribute => {
-            const value = attrObj[attribute];
+    input.forEach(({ table, columns }) => {
+        let query = `CREATE TABLE IF NOT EXISTS ${table} (\n%s);`
+        let tableStringArray = [];
+        columns.forEach(column => {
+            // TODO: Validate that keys have only one element
+            const tableName = Object.keys(column)[0];
+            const value = column[tableName];
             if (typeof value === 'object' && value.hasOwnProperty('linkedTable')) {
-                const tableName = value['linkedTable'];
-                tableStringArray.push(`${tableName}_id INT REFERENCES ${tableName}(_id)`);
+                // TODO: validate only one element in output
+                const referencedTable = value['linkedTable'].split(".")[0];
+                tableStringArray.push(`${referencedTable}_id INT REFERENCES ${referencedTable}(_id)`);
+            } else if (typeof value === 'object' && value.hasOwnProperty('primaryKey')) {
+                tableStringArray.push(`${tableName} ${value.type} PRIMARY KEY`);
             } else {
-                const substringArray = [attribute];
-                const type = typeof attrObj[attribute] === 'string' ?
-                    attrObj[attribute] : attrObj[attribute]['type'];
-                switch (type) {
-                    // TODO: Potentially set these as types
-                    case 'varchar': {
-                        substringArray.push('VARCHAR(255)');
-                        break;
-                    }
-                    case 'integer': {
-                        substringArray.push('INT');
-                        break
-                    }
-                    case 'float': {
-                        substringArray.push('FLOAT');
-                        break;
-                    }
-                    case 'boolean': {
-                        substringArray.push('BOOLEAN');
-                        break;
-                    }
-                    // TODO: date or timestamp (TIMESTAMPTZ)?
-                    case 'date': {
-                        substringArray.push('DATE');
-                        break;
-                    }
-                    default: throw new Error(`Unexpected data type: ${type}.`)
-                }
-                tableStringArray.push(substringArray.join(' '));
+                tableStringArray.push(`${tableName} ${value}`);
             }
         }
         );
