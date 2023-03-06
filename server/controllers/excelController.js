@@ -286,23 +286,6 @@ excelController.getRelationships = async (req, res, next) => {
     }
   }
 
-  /*
-  [
-    {
-      "people": "one",
-      "species": "many"
-    },
-    {
-      "people": "many",
-      "films": "many"
-    },
-    {
-      "species": "many",
-      "films": "many"
-    }
-  ]
-  */
-
   // adds foreign key to left table, which points to right table's primary key
   const addForeignKey = (leftTableName, rightTableName) => {
     for (let obj of output) {
@@ -320,6 +303,7 @@ excelController.getRelationships = async (req, res, next) => {
 
   for (let relationship of relationships) {
     const relType = new Set(Object.values(relationship));
+    const relTables = Object.keys(relationship)
 
     // if relationship is one-many, left table becomes "one" and right table becomes "many"
     if (relType.has('one') && relType.has('many')) {
@@ -333,12 +317,14 @@ excelController.getRelationships = async (req, res, next) => {
       addForeignKey(leftTableName, rightTableName);
     }
 
-    // ONE-ONE NOT BUILT - COME BACK TO IT (no 1-1s in table)
+    // if relationship is one-one, use the first table as the left table
+    // opportunity for improvement here - get user input on which table is the left table and/or let them update it after the fact and regenerate sql
+    else if (relType.has('one')) {
+      addForeignKey(relTables[0], relTables[1])
+    }
 
+    // if relationship is many-many, add join table, then add both foreign keys to join table
     else if (relType.has('many')) {
-      // add join table
-      // add fk to join table with join table as left and each table in relationship as right
-      const relTables = Object.keys(relationship)
       const joinTableName = `${relTables[0]}_${relTables[1]}`;
       const joinTable = {
         tableName: joinTableName,
