@@ -121,8 +121,8 @@ const MappingInput = (props) => {
   const { id, handleInputChange } = props;
   return (
     <div className='input-container'>
-      <input id={id} name='fileColumn' type='text' onChange={handleInputChange} />
-      <input id={id} name='tableName' type='text' onChange={handleInputChange} />
+      <input id={id} name='fileColumn' type='text' onChange={handleInputChange} required={id === 0} />
+      <input id={id} name='tableName' type='text' onChange={handleInputChange} required={id === 0} />
     </div>
   );
 }
