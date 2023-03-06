@@ -206,23 +206,33 @@ excelController.getRelationships = async (req, res, next) => {
     rows.push(tempObj)
   }
 
+  const tables = {};
   for (let obj of output) {
+    // add id col to each table
     obj.columns.unshift({
       _id: {
         primaryKey: true, type: 'SERIAL'
       }
     })
+
+    // un-nest object for the sake of later table lookup
+    const tempObj = {};
+    for (let colObj of obj.columns) {
+      for (let col in colObj) {
+        tempObj[col] = colObj[col];
+      }
+    }
+    tables[obj.tableName] = tempObj;
   }
 
-  const tables = [];
+  const tableNames = [];
   for (let key in rows[0]) {
-    tables.push(key);
+    tableNames.push(key);
   }
-
 
   // calculate the number of unique rows in each table
   const uniqueRowsInTables = {};
-  for (let tableName of tables) {
+  for (let tableName of tableNames) {
     const set = new Set;
     for (let row of rows) {
       set.add(JSON.stringify(row[tableName]))
@@ -231,7 +241,7 @@ excelController.getRelationships = async (req, res, next) => {
   }
 
   // returns an array of all combinations of 2 tables as we need to compare each table vs every other table
-  const tablePairs = new Iter(tables).combinations(2).toArray();
+  const tablePairs = new Iter(tableNames).combinations(2).toArray();
 
   // calculate the number of unique rows in each combination of two tables
   const uniqueRowsInTablePairs = {};
@@ -276,7 +286,60 @@ excelController.getRelationships = async (req, res, next) => {
     }
   }
 
-  res.json(relationships)
+  /*
+  [
+    {
+      "people": "one",
+      "species": "many"
+    },
+    {
+      "people": "many",
+      "films": "many"
+    },
+    {
+      "species": "many",
+      "films": "many"
+    }
+  ]
+  */
+
+  for (let relationship of relationships) {
+    const relType = new Set(Object.values(relationship));
+    // one-one, one-many, many-many
+
+    // if relationship is one-many, left table becomes "one" and right table becomes "many"
+    if (relType.has('one') && relType.has('many')) {
+      let leftTableName;
+      let rightTableName;
+      for (let tableName in relationship) {
+        if (relationship[tableName] === 'one') leftTableName = tableName;
+        else rightTableName = tableName;
+      }
+
+      // add foreign key to left table
+      // tables[leftTableName][(`${rightTableName}_id`)] = {
+      //   linkedTable: `${rightTableName}._id`,
+      //   type: 'SERIAL'
+      // }
+
+      for (let obj of output) {
+        if (obj.tableName === leftTableName) {
+          foreignKeyObj = {};
+          foreignKeyObj[(`${rightTableName}_id`)] = {
+            linkedTable: `${rightTableName}._id`,
+            type: 'SERIAL'
+          }
+
+          obj.columns.push(foreignKeyObj);
+        }
+      }
+    }
+
+  }
+
+  res.json(output)
+
+
 
   /*  OUTPUT:
 const DUMMY_DATA = [
