@@ -68,8 +68,10 @@ input[type='file'] {
 .info-panel__upload-btn {
   all: unset;
   cursor: pointer;
-  font-size: 2rem;
+  font-size: 3rem;
   transition: all 0.3s;
+  font-weight: bolder;
+  font-family: 'Mynerve';
 }
 
 .info-panel__upload-btn:hover {
@@ -78,6 +80,13 @@ input[type='file'] {
 
 .info-panel__upload-btn:active {
   transform: scale(1);
+}
+
+.info-panel__error {
+  margin-top: 2rem;
+  font-size: 1.8rem;
+  text-align: center;
+  font-weight: bold;
 }
 
 .mapping-input--container {
