@@ -44,22 +44,20 @@ const TableNode = ({ data }) => {
           linkTo={linkTo}
         />,
       ]);
+      if (linkTo) {
+        const sourceTable = tableData.tableName;
+        const sourceColumn = columnName;
+        const [targetTable, targetColumn] = linkTo.split(`.`);
+
+        data.updateEdge({
+          id: `${sourceTable}/${sourceColumn}-${targetTable}/${targetColumn}`,
+          source: sourceTable,
+          target: targetTable,
+          sourceHandle: sourceColumn,
+          targetHandle: targetColumn,
+        });
+      }
     });
-    data.updateEdge({
-      id: 'table1-table2',
-      source: 'table1name',
-      target: 'table2name',
-      sourceHandle: 'column2Name',
-      targetHandle: 'column1Name',
-    });
-    data.updateEdge({
-      id: 'table1-table3',
-      source: 'table1name',
-      target: 'table3name',
-      sourceHandle: 'column5Name',
-      targetHandle: 'column1Name',
-    });
-    console.log(`updated`);
   }, []);
 
   return (

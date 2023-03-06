@@ -42,7 +42,8 @@ const InfoPanel = () => {
         deserunt labore, aliquam repellat repudiandae perspiciatis explicabo
         pariatur ducimus commo di nihil velit! Lorem ipsum dolor sit amet
         consectetur adipisicing elit. Dolor natus volup tate beatae fugit quidem
-        accusamus provident nostrum sequi quas!
+        accusamus provident nostrum sequi quas! %%%Make clear in the user
+        instructions to write table names starting from left to right%%%
       </p>
       <form className="info-panel__upload-form" onSubmit={uploadExcelHandler}>
         <label className="upload-form--container">
