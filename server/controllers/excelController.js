@@ -99,16 +99,16 @@ excelController.getDataTypes = async (req, res, next) => {
 
         // compare to tempType (set in previous iterations of switch statement below)
         // if there are discrepancies default to string (varchar)
-        if (tempType && currType !== tempType) return 'varchar';
+        if (tempType && currType !== tempType) return 'VARCHAR(255)';
 
         // further logic per type
         switch (currType) {
           case 'string':
-            return 'varchar';
+            return 'VARCHAR(255)';
           case 'number':
             tempType = 'number';
             if (numType != 'float' && val === Math.floor(val)) {
-              numType = 'integer';
+              numType = 'int';
             } else {
               numType = 'float';
             }
@@ -118,8 +118,8 @@ excelController.getDataTypes = async (req, res, next) => {
         }
       }
 
-      if (tempType === 'number') return numType;
-      return tempType;
+      if (tempType === 'number') return numType.toUpperCase();
+      return tempType.toUpperCase();
     };
 
     for (let col in res.locals.inputCols) {
@@ -138,101 +138,126 @@ excelController.getDataTypes = async (req, res, next) => {
   }
 };
 
-excelController.countValues = async (req, res, next) => {
-  console.log('entering excelController.countValues');
-
-  // get number of unique vals in each col
-  // switch this to res.locals.inputCols
-  try {
-    res.locals.colUniqueCounts = {};
-
-    for (let col in res.locals.inputCols) {
-      const set = new Set(res.locals.inputCols[col]);
-      const uniqueVals = set.size;
-
-      res.locals.colUniqueCounts[col] = uniqueVals;
-    }
-    return next();
-  } catch (error) {
-    return next({
-      log: `Controller error in excelController.countValues: ${error}`,
-      status: 400,
-      message: { err: error },
-    });
-  }
-  // res.json(res.locals.colUniqueCounts)
-};
-
-excelController.tableLogic = async (req, res, next) => {
+excelController.getRelationships = async (req, res, next) => {
   console.log('entering excelController.tableLogic');
 
-  /*
-  start to put logic together to figure out where breaking points are for each table
-  rough idea:
-    compare groups of cols that have the same number of unique values to see if they are complete dups,
-    i.e., if A, B, and C each have 4 unique values, compare the combined value of A+B+C to confirm if there
-    are also 4 unique combinations -> if yes, A, B, C are a table
-    if no -> break into subsets of unique combinations and ??
-  */
+  // const tableData = {
+  //   'name': 'people',
+  //   'mass': 'people',
+  //   'hair_color': 'people',
+  //   'skin_color': 'people',
+  //   'eye_color': 'people',
+  //   'birth_year': 'people',
+  //   'gender': 'people',
+  //   'height': 'people',
+  //   'name2': 'species',
+  //   'classification': 'species',
+  //   'average_height': 'species',
+  //   'average_lifespan': 'species',
+  //   'hair_colors': 'species',
+  //   'skin_colors': 'species',
+  //   'eye_colors': 'species',
+  //   'language': 'species',
+  //   'title': 'films',
+  //   'director': 'films',
+  //   'producer': 'films',
+  //   'release_date': 'films'
+  // }
 
-  const cols = Object.keys(res.locals.inputCols);
-  const rows = res.locals.inputRows;
-  // get unique combinations of col names using Iter
-  // for each set of column names, determine whether there is a unique set of rows within those cols
-  // consolidate, i.e., if A-B-C-D go together then A-B-C, A-B, A-C, A-D, B-C.... can be removed
-  // ** this should be done first for time complexity
+  // // get array of distinct tables by first filtering thru a set
+  // const tables = Array.from(new Set(Object.values(tableData)));
+  // const output = [];
+  // for (let table of tables) {
+  //   output.push({
+  //     table: table,
+  //     columns: [
 
-  const nestedCombos = [];
-  // for (i = cols.length + 1; i > 1; i--) {
-  for (i = 2; i < cols.length + 1; i++) {
-    nestedCombos.push(new Iter(cols).combinations(i).toArray());
-  }
+  //     ]
+  //   })
+  // }
 
-  const combos = nestedCombos.flat();
-  const tables = [];
-
-  for (let combo of combos) {
-    const set = new Set();
-
-    for (let row of rows) {
-      // get a stringified copy of the current row that only includes the col names in the selected combo
-      const rowCopy = JSON.stringify(
-        combo.reduce((newRow, key) => ((newRow[key] = row[key]), newRow), {})
-      );
-
-      // add copied row to set
-      set.add(rowCopy);
+  const output = [
+    {
+      table: 'people',
+      columns: [
+        { name: "VARCHAR(255)" },
+        { mass: "FLOAT" },
+        { hair_color: "VARCHAR(255)" },
+        { skin_color: "VARCHAR(255)" },
+        { eye_color: "VARCHAR(255)" },
+        { birth_year: "VARCHAR(255)" },
+        { gender: "VARCHAR(255)" },
+        { height: "INT" },
+      ]
+    },
+    {
+      table: 'species',
+      columns: [
+        { name: "VARCHAR(255)" },
+        { classification: "VARCHAR(255)" },
+        { average_height: "VARCHAR(255)" },
+        { average_lifespan: "VARCHAR(255)" },
+        { hair_colors: "VARCHAR(255)" },
+        { skin_colors: "VARCHAR(255)" },
+        { eye_colors: "VARCHAR(255)" },
+        { language: "VARCHAR(255)" }
+      ]
+    },
+    {
+      table: 'films',
+      columns: [
+        { title: "VARCHAR(255)" },
+        { director: "VARCHAR(255)" },
+        { producer: "VARCHAR(255)" },
+        { release_date: "DATE" }
+      ]
     }
+  ]
 
-    // if the number of rows in the set is the same as the number of rows in the spreadsheet, this cannot be a table
-    // if it is less, it may be a table
-    if (set.size !== rows.length) {
-      tables.push(combo);
-    }
+  console.log(output);
+  res.json(res.locals);
 
-    // ****additional filtering of possible tables definitely needed***
-  }
-
-  // console.log(tables);
-  res.json(tables.length);
 
   /*  OUTPUT:
+const DUMMY_DATA = [
   {
-    table1Name: {
-      column1Name: {primaryKey: true, type: “number”},
-      column2Name: “string”,
-      column3Name: “number”,
-      column4Name: “boolean”,
-      column5Name: {linkedTable: table2Name.column2Name, type: “number”}
+    table: {
+      tableName: 'table1name',
+      columns: [
+        { column1Name: { primaryKey: true, type: 'number' } },
+        { column2Name: 'string' },
+        { column3Name: 'number' },
+        { column4Name: 'boolean' },
+        {
+          column5Name: {
+            linkedTable: 'table2Name.column1Name',
+            type: 'number',
+          },
+        },
+      ],
     },
-    table2Name: {
-      column1Name: {primaryKey: true, type: “number”},
-      column2Name: “string”
-    }
-  }
-
-  in this example column 1 is the primary key for table 1, and it links to table
-  2's second column via the foreign key stored in column 5
+  },
+  {
+    table: {
+      tableName: 'table2name',
+      columns: [
+        { column1Name: { primaryKey: true, type: 'number' } },
+        { column2Name: 'string' },
+      ],
+    },
+  },
+  {
+    table: {
+      tableName: 'table3name',
+      columns: [
+        { column1Name: { primaryKey: true, type: 'number' } },
+        { column2Name: 'number' },
+        { column3Name: 'string' },
+        { column4Name: 'boolean' },
+      ],
+    },
+  },
+];
   */
 };
 
