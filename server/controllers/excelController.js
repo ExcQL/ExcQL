@@ -141,8 +141,6 @@ excelController.getDataTypes = async (req, res, next) => {
 excelController.getRelationships = async (req, res, next) => {
   console.log('entering excelController.tableLogic');
 
-
-
   // replace output and rows with res.locals once created
   const output = [
     {
@@ -208,8 +206,6 @@ excelController.getRelationships = async (req, res, next) => {
     rows.push(tempObj)
   }
 
-  res.json(rows)
-
   for (let obj of output) {
     obj.columns.unshift({
       _id: {
@@ -223,12 +219,64 @@ excelController.getRelationships = async (req, res, next) => {
     tables.push(key);
   }
 
+
+  // calculate the number of unique rows in each table
+  const uniqueRowsInTables = {};
+  for (let tableName of tables) {
+    const set = new Set;
+    for (let row of rows) {
+      set.add(JSON.stringify(row[tableName]))
+    }
+    uniqueRowsInTables[tableName] = set.size;
+  }
+
   // returns an array of all combinations of 2 tables as we need to compare each table vs every other table
   const tablePairs = new Iter(tables).combinations(2).toArray();
-  console.log(tablePairs);
 
-  // console.log(output);
-  // res.json(res.locals.inputCols);
+  // calculate the number of unique rows in each combination of two tables
+  const uniqueRowsInTablePairs = {};
+  for (let pair of tablePairs) {
+    const set = new Set;
+    for (let row of rows) {
+      // get a stringified copy of the current row that only includes the col names in the selected table pair
+      const rowCopy = JSON.stringify(pair.reduce((newRow, key) =>
+        (newRow[key] = row[key], newRow)
+        , {}));
+
+      // add copied row to set
+      set.add(rowCopy);
+    }
+    uniqueRowsInTablePairs[pair] = set.size;
+  }
+
+  const relationships = [];
+  for (let pair in uniqueRowsInTablePairs) {
+    const tables = pair.split(',')
+    const pairCount = uniqueRowsInTablePairs[pair];
+    const leftTableCount = uniqueRowsInTables[tables[0]]
+    const rightTableCount = uniqueRowsInTables[tables[1]]
+    const tempObj = {};
+
+    if (pairCount > leftTableCount && pairCount > rightTableCount) {
+      tempObj[tables[0]] = 'many';
+      tempObj[tables[1]] = 'many';
+      relationships.push(tempObj);
+    } else if (pairCount === leftTableCount && pairCount > rightTableCount) {
+      tempObj[tables[0]] = 'one';
+      tempObj[tables[1]] = 'many';
+      relationships.push(tempObj);
+    } else if (pairCount > leftTableCount && pairCount === rightTableCount) {
+      tempObj[tables[0]] = 'many';
+      tempObj[tables[1]] = 'one';
+      relationships.push(tempObj);
+    } else if (leftTableCount === rightTableCount) {
+      tempObj[tables[0]] = 'one';
+      tempObj[tables[1]] = 'one';
+      relationships.push(tempObj);
+    }
+  }
+
+  res.json(relationships)
 
   /*  OUTPUT:
 const DUMMY_DATA = [
