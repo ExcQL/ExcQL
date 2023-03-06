@@ -141,44 +141,10 @@ excelController.getDataTypes = async (req, res, next) => {
 excelController.getRelationships = async (req, res, next) => {
   console.log('entering excelController.tableLogic');
 
-  // const tableData = {
-  //   'name': 'people',
-  //   'mass': 'people',
-  //   'hair_color': 'people',
-  //   'skin_color': 'people',
-  //   'eye_color': 'people',
-  //   'birth_year': 'people',
-  //   'gender': 'people',
-  //   'height': 'people',
-  //   'name2': 'species',
-  //   'classification': 'species',
-  //   'average_height': 'species',
-  //   'average_lifespan': 'species',
-  //   'hair_colors': 'species',
-  //   'skin_colors': 'species',
-  //   'eye_colors': 'species',
-  //   'language': 'species',
-  //   'title': 'films',
-  //   'director': 'films',
-  //   'producer': 'films',
-  //   'release_date': 'films'
-  // }
-
-  // // get array of distinct tables by first filtering thru a set
-  // const tables = Array.from(new Set(Object.values(tableData)));
-  // const output = [];
-  // for (let table of tables) {
-  //   output.push({
-  //     table: table,
-  //     columns: [
-
-  //     ]
-  //   })
-  // }
-
+  // replace output and rows with res.locals once created
   const output = [
     {
-      table: 'people',
+      tableName: 'people',
       columns: [
         { name: "VARCHAR(255)" },
         { mass: "FLOAT" },
@@ -191,7 +157,7 @@ excelController.getRelationships = async (req, res, next) => {
       ]
     },
     {
-      table: 'species',
+      tableName: 'species',
       columns: [
         { name: "VARCHAR(255)" },
         { classification: "VARCHAR(255)" },
@@ -204,7 +170,7 @@ excelController.getRelationships = async (req, res, next) => {
       ]
     },
     {
-      table: 'films',
+      tableName: 'films',
       columns: [
         { title: "VARCHAR(255)" },
         { director: "VARCHAR(255)" },
@@ -214,8 +180,166 @@ excelController.getRelationships = async (req, res, next) => {
     }
   ]
 
-  console.log(output);
-  res.json(res.locals);
+  const rows = [];
+  for (let currRow of res.locals.inputRows) {
+    const tempObj = { people: {}, species: {}, films: {} }
+    const people = ['name', 'mass', 'hair_color', 'skin_color', 'eye_color', 'birth_year', 'gender', 'height']
+    const species = ['name2', 'classification', 'average_height', 'average_lifespan', 'hair_colors', 'skin_colors', 'eye_colors', 'language']
+    const films = ['title', 'director', 'producer', 'release_date']
+
+    for (let col of people) {
+      tempObj.people[col] = currRow[col];
+    }
+
+    for (let col of species) {
+      if (col === 'name2') {
+        tempObj.species.name = currRow[col];
+      } else {
+        tempObj.species[col] = currRow[col];
+      }
+    }
+
+    for (let col of films) {
+      tempObj.films[col] = currRow[col];
+    }
+
+    rows.push(tempObj)
+  }
+
+  const tables = {};
+  for (let obj of output) {
+    // add id col to each table
+    obj.columns.unshift({
+      _id: {
+        primaryKey: true, type: 'INT'
+      }
+    })
+
+    // un-nest object for the sake of later table lookup
+    const tempObj = {};
+    for (let colObj of obj.columns) {
+      for (let col in colObj) {
+        tempObj[col] = colObj[col];
+      }
+    }
+    tables[obj.tableName] = tempObj;
+  }
+
+  const tableNames = [];
+  for (let key in rows[0]) {
+    tableNames.push(key);
+  }
+
+  // calculate the number of unique rows in each table
+  const uniqueRowsInTables = {};
+  for (let tableName of tableNames) {
+    const set = new Set;
+    for (let row of rows) {
+      set.add(JSON.stringify(row[tableName]))
+    }
+    uniqueRowsInTables[tableName] = set.size;
+  }
+
+  // returns an array of all combinations of 2 tables as we need to compare each table vs every other table
+  const tablePairs = new Iter(tableNames).combinations(2).toArray();
+
+  // calculate the number of unique rows in each combination of two tables
+  const uniqueRowsInTablePairs = {};
+  for (let pair of tablePairs) {
+    const set = new Set;
+    for (let row of rows) {
+      // get a stringified copy of the current row that only includes the col names in the selected table pair
+      const rowCopy = JSON.stringify(pair.reduce((newRow, key) =>
+        (newRow[key] = row[key], newRow)
+        , {}));
+
+      // add copied row to set
+      set.add(rowCopy);
+    }
+    uniqueRowsInTablePairs[pair] = set.size;
+  }
+
+  const relationships = [];
+  for (let pair in uniqueRowsInTablePairs) {
+    const tables = pair.split(',')
+    const pairCount = uniqueRowsInTablePairs[pair];
+    const leftTableCount = uniqueRowsInTables[tables[0]]
+    const rightTableCount = uniqueRowsInTables[tables[1]]
+    const tempObj = {};
+
+    if (pairCount > leftTableCount && pairCount > rightTableCount) {
+      tempObj[tables[0]] = 'many';
+      tempObj[tables[1]] = 'many';
+      relationships.push(tempObj);
+    } else if (pairCount === leftTableCount && pairCount > rightTableCount) {
+      tempObj[tables[0]] = 'one';
+      tempObj[tables[1]] = 'many';
+      relationships.push(tempObj);
+    } else if (pairCount > leftTableCount && pairCount === rightTableCount) {
+      tempObj[tables[0]] = 'many';
+      tempObj[tables[1]] = 'one';
+      relationships.push(tempObj);
+    } else if (leftTableCount === rightTableCount) {
+      tempObj[tables[0]] = 'one';
+      tempObj[tables[1]] = 'one';
+      relationships.push(tempObj);
+    }
+  }
+
+  // adds foreign key to left table, which points to right table's primary key
+  const addForeignKey = (leftTableName, rightTableName) => {
+    for (let obj of output) {
+      if (obj.tableName === leftTableName) {
+        foreignKeyObj = {};
+        foreignKeyObj[(`${rightTableName}_id`)] = {
+          linkedTable: `${rightTableName}._id`,
+          type: 'INT'
+        }
+
+        obj.columns.push(foreignKeyObj);
+      }
+    }
+  };
+
+  for (let relationship of relationships) {
+    const relType = new Set(Object.values(relationship));
+    const relTables = Object.keys(relationship)
+
+    // if relationship is one-many, left table becomes "one" and right table becomes "many"
+    if (relType.has('one') && relType.has('many')) {
+      let leftTableName;
+      let rightTableName;
+      for (let tableName in relationship) {
+        if (relationship[tableName] === 'one') leftTableName = tableName;
+        else rightTableName = tableName;
+      }
+
+      addForeignKey(leftTableName, rightTableName);
+    }
+
+    // if relationship is one-one, use the first table as the left table
+    // opportunity for improvement here - get user input on which table is the left table and/or let them update it after the fact and regenerate sql
+    else if (relType.has('one')) {
+      addForeignKey(relTables[0], relTables[1])
+    }
+
+    // if relationship is many-many, add join table, then add both foreign keys to join table
+    else if (relType.has('many')) {
+      const joinTableName = `${relTables[0]}_${relTables[1]}`;
+      const joinTable = {
+        tableName: joinTableName,
+        columns: [{ "_id": { primaryKey: true, type: 'INT' } }]
+      };
+
+      output.push(joinTable);
+
+      addForeignKey(joinTableName, relTables[0])
+      addForeignKey(joinTableName, relTables[1])
+    }
+  }
+
+  res.json(output)
+
 
 
   /*  OUTPUT:
