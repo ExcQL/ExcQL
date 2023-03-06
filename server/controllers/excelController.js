@@ -141,44 +141,12 @@ excelController.getDataTypes = async (req, res, next) => {
 excelController.getRelationships = async (req, res, next) => {
   console.log('entering excelController.tableLogic');
 
-  // const tableData = {
-  //   'name': 'people',
-  //   'mass': 'people',
-  //   'hair_color': 'people',
-  //   'skin_color': 'people',
-  //   'eye_color': 'people',
-  //   'birth_year': 'people',
-  //   'gender': 'people',
-  //   'height': 'people',
-  //   'name2': 'species',
-  //   'classification': 'species',
-  //   'average_height': 'species',
-  //   'average_lifespan': 'species',
-  //   'hair_colors': 'species',
-  //   'skin_colors': 'species',
-  //   'eye_colors': 'species',
-  //   'language': 'species',
-  //   'title': 'films',
-  //   'director': 'films',
-  //   'producer': 'films',
-  //   'release_date': 'films'
-  // }
 
-  // // get array of distinct tables by first filtering thru a set
-  // const tables = Array.from(new Set(Object.values(tableData)));
-  // const output = [];
-  // for (let table of tables) {
-  //   output.push({
-  //     table: table,
-  //     columns: [
 
-  //     ]
-  //   })
-  // }
-
+  // replace output and rows with res.locals once created
   const output = [
     {
-      table: 'people',
+      tableName: 'people',
       columns: [
         { name: "VARCHAR(255)" },
         { mass: "FLOAT" },
@@ -191,7 +159,7 @@ excelController.getRelationships = async (req, res, next) => {
       ]
     },
     {
-      table: 'species',
+      tableName: 'species',
       columns: [
         { name: "VARCHAR(255)" },
         { classification: "VARCHAR(255)" },
@@ -204,7 +172,7 @@ excelController.getRelationships = async (req, res, next) => {
       ]
     },
     {
-      table: 'films',
+      tableName: 'films',
       columns: [
         { title: "VARCHAR(255)" },
         { director: "VARCHAR(255)" },
@@ -214,9 +182,53 @@ excelController.getRelationships = async (req, res, next) => {
     }
   ]
 
-  console.log(output);
-  res.json(res.locals);
+  const rows = [];
+  for (let currRow of res.locals.inputRows) {
+    const tempObj = { people: {}, species: {}, films: {} }
+    const people = ['name', 'mass', 'hair_color', 'skin_color', 'eye_color', 'birth_year', 'gender', 'height']
+    const species = ['name2', 'classification', 'average_height', 'average_lifespan', 'hair_colors', 'skin_colors', 'eye_colors', 'language']
+    const films = ['title', 'director', 'producer', 'release_date']
 
+    for (let col of people) {
+      tempObj.people[col] = currRow[col];
+    }
+
+    for (let col of species) {
+      if (col === 'name2') {
+        tempObj.species.name = currRow[col];
+      } else {
+        tempObj.species[col] = currRow[col];
+      }
+    }
+
+    for (let col of films) {
+      tempObj.films[col] = currRow[col];
+    }
+
+    rows.push(tempObj)
+  }
+
+  res.json(rows)
+
+  for (let obj of output) {
+    obj.columns.unshift({
+      _id: {
+        primaryKey: true, type: 'SERIAL'
+      }
+    })
+  }
+
+  const tables = [];
+  for (let key in rows[0]) {
+    tables.push(key);
+  }
+
+  // returns an array of all combinations of 2 tables as we need to compare each table vs every other table
+  const tablePairs = new Iter(tables).combinations(2).toArray();
+  console.log(tablePairs);
+
+  // console.log(output);
+  // res.json(res.locals.inputCols);
 
   /*  OUTPUT:
 const DUMMY_DATA = [
