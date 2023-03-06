@@ -211,7 +211,7 @@ excelController.getRelationships = async (req, res, next) => {
     // add id col to each table
     obj.columns.unshift({
       _id: {
-        primaryKey: true, type: 'SERIAL'
+        primaryKey: true, type: 'INT'
       }
     })
 
@@ -303,9 +303,23 @@ excelController.getRelationships = async (req, res, next) => {
   ]
   */
 
+  // adds foreign key to left table, which points to right table's primary key
+  const addForeignKey = (leftTableName, rightTableName) => {
+    for (let obj of output) {
+      if (obj.tableName === leftTableName) {
+        foreignKeyObj = {};
+        foreignKeyObj[(`${rightTableName}_id`)] = {
+          linkedTable: `${rightTableName}._id`,
+          type: 'INT'
+        }
+
+        obj.columns.push(foreignKeyObj);
+      }
+    }
+  };
+
   for (let relationship of relationships) {
     const relType = new Set(Object.values(relationship));
-    // one-one, one-many, many-many
 
     // if relationship is one-many, left table becomes "one" and right table becomes "many"
     if (relType.has('one') && relType.has('many')) {
@@ -316,25 +330,26 @@ excelController.getRelationships = async (req, res, next) => {
         else rightTableName = tableName;
       }
 
-      // add foreign key to left table
-      // tables[leftTableName][(`${rightTableName}_id`)] = {
-      //   linkedTable: `${rightTableName}._id`,
-      //   type: 'SERIAL'
-      // }
-
-      for (let obj of output) {
-        if (obj.tableName === leftTableName) {
-          foreignKeyObj = {};
-          foreignKeyObj[(`${rightTableName}_id`)] = {
-            linkedTable: `${rightTableName}._id`,
-            type: 'SERIAL'
-          }
-
-          obj.columns.push(foreignKeyObj);
-        }
-      }
+      addForeignKey(leftTableName, rightTableName);
     }
 
+    // ONE-ONE NOT BUILT - COME BACK TO IT (no 1-1s in table)
+
+    else if (relType.has('many')) {
+      // add join table
+      // add fk to join table with join table as left and each table in relationship as right
+      const relTables = Object.keys(relationship)
+      const joinTableName = `${relTables[0]}_${relTables[1]}`;
+      const joinTable = {
+        tableName: joinTableName,
+        columns: [{ "_id": { primaryKey: true, type: 'INT' } }]
+      };
+
+      output.push(joinTable);
+
+      addForeignKey(joinTableName, relTables[0])
+      addForeignKey(joinTableName, relTables[1])
+    }
   }
 
   res.json(output)
