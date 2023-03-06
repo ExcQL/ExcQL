@@ -75,11 +75,11 @@ const InfoPanel = () => {
         <span className="info-panel__steps">
           Step 1: Upload your file
         </span>
-        <div className="upload-form--container">
+        <label className="upload-form--container">
           <input type="file" id="files" name="files" accept=".xls, .xlsx" onChange={handleUploadFile} />
           <RiFolderUploadFill className="info-panel__upload-icon" />
           <span id='file-name'></span>
-        </div>
+        </label>
         <span className="info-panel__steps">
           Step 2: Declare file columns to SQL tables mapping
         </span>
