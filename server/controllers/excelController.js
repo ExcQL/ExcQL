@@ -259,7 +259,7 @@ excelController.getDataTypes = async (req, res, next) => {
     //   console.log(el.columns);
     // }
     res.locals.output = columnsArr;
-    console.log(res.locals.dataRows);
+
     return next();
   } catch (error) {
     return next({
