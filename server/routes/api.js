@@ -14,7 +14,12 @@ router.post(
   excelController.read,
   excelController.convertInputs,
   excelController.getDataTypes,
-  excelController.getRelationships
+  excelController.addIds,
+  excelController.calcUniqueRows,
+  excelController.getRelationships,
+  (req, res) => {
+    res.json(res.locals.output)
+  }
 );
 router.patch('/', (req, res) => { });
 router.delete('/', (req, res) => { });
