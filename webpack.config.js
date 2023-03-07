@@ -17,7 +17,7 @@ module.exports = {
     port: 8080,
     historyApiFallback: true,
     headers: { 'Access-Control-Allow-Origin': '*' },
-    proxy: { '/orders': 'http://localhost:3000/' },
+    proxy: { '/api': 'http://localhost:3000/' },
   },
   module: {
     rules: [
@@ -31,7 +31,7 @@ module.exports = {
       },
       {
         test: /.css$/,
-        exclude: /node_modules/,
+        exclude: /node_modules\/(?!@?reactflow).*/,
         use: ['style-loader', 'css-loader'],
       },
     ],

@@ -1,0 +1,53 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* BACKGROUND COLORS */
+  --info-panel-bg: #1b998b;
+  --canvas-bg: #f8f1ff;
+  --nav-bg: #534d56;
+  --button-bg: #656176;
+
+  /* FONT TEXT COLORS */
+  --text-color-light: #656176;
+  --text-color-medium: #534d56;
+  --text-color-dark: #292929;
+  --nav-text-color: #f8f1ff;
+
+  /* HEADING FONT */
+  --heading-font-fam: 'Mynerve';
+
+  /* DESCRIPTION FONT */
+  --description-font: 'Neuton';
+
+  /* MISC */
+  --light-purple: #decdf5;
+}
+
+html {
+  font-size: 62.5%;
+}
+
+body {
+  font-family: sans-serif;
+  /* choose a font family */
+  font-size: 1.6rem;
+  color: #292929;
+  line-height: 1;
+}
+
+.App {
+  display: flex;
+  background-color: grey;
+  height: 100vh;
+  width: 100vw;
+}
+
+.nav-canvas-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}

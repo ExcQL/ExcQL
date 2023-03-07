@@ -1,0 +1,140 @@
+.info-panel {
+  background-color: var(--info-panel-bg);
+  width: 22%;
+  padding: 0 3rem;
+  overflow-y: scroll;
+}
+
+.info-panel__main-heading {
+  font-family: 'Mynerve';
+  font-size: 8rem;
+  margin: 5rem auto 1rem auto;
+  margin-top: 3rem;
+  width: max-content;
+  letter-spacing: -7px;
+}
+
+.info-panel__description {
+  font-size: 2rem;
+  line-height: 1.3;
+  margin-bottom: 2rem;
+  font-family: var(--description-font);
+  text-align: center;
+}
+
+.info-panel__steps {
+  font-size: 1.8rem;
+  line-height: 1.3;
+  margin-bottom: 2rem;
+  font-family: var(--description-font);
+  text-align: left;
+  font-weight: 700;
+}
+
+.info-panel__instructions {
+  font-size: 1.8rem;
+  line-height: 1.3;
+  margin: 2rem auto 2rem auto;
+  font-family: var(--description-font);
+  text-align: left;
+}
+
+.upload-form--container {
+  margin: 1em auto 1em auto;
+  padding: 1.5rem 0;
+  border: 1.5px dashed var(--nav-text-color);
+  border: 1.5px dashed var(--text-color-dark);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 75%;
+}
+
+input[type='file'] {
+  display: none;
+}
+
+#file-name {
+  align-self: center;
+  font-family: var(--description-font);
+}
+
+.info-panel__upload-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.info-panel__upload-btn {
+  all: unset;
+  cursor: pointer;
+  font-size: 3rem;
+  transition: all 0.3s;
+  font-weight: bolder;
+  font-family: 'Mynerve';
+}
+
+.info-panel__upload-btn:hover {
+  transform: scale(1.1);
+}
+
+.info-panel__upload-btn:active {
+  transform: scale(1);
+}
+
+.info-panel__error {
+  margin-top: 1.5rem;
+  font-size: 1.8rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+.mapping-input--container {
+  display: flex;
+  flex-direction: column;
+  margin: 1rem auto 1rem auto;
+  border: 1.5px dashed var(--nav-text-color);
+  border: 1.5px dashed var(--text-color-dark);
+  border-radius: 20px;
+  padding: 1rem 0;
+}
+
+.input-container {
+  display: flex;
+  justify-content: space-around;
+}
+
+.mapping-input--container>header {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  padding-left: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.4rem;
+}
+
+input[type=text] {
+  width: 40%;
+  background-color: var(--canvas-bg);
+  border: 1px solid #656176;
+  border-radius: 3px;
+  padding: 0.2rem;
+  margin: 0.3rem;
+}
+
+#more-inputs {
+  border: 1px solid var(--nav-bg);
+  border-radius: 3px;
+  background-color: var(--button-bg);
+  color: var(--nav-text-color);
+  cursor: pointer;
+  width: 90%;
+  align-self: center;
+  margin-top: 0.5rem;
+}
+
+#more-inputs:hover {
+  background-color: var(--nav-text-color);
+  color: var(--nav-bg);
+}
