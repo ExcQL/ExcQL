@@ -78,9 +78,10 @@ excelController.convertInputs = async (req, res, next) => {
     }
 
     // Gets table boundaries
-    const excelMap = { ...(data || sample) };
-    const arrOfColLettersSample = Object.values(data || sample);
-    const arrOfTableNames = Object.keys(data || sample);
+    const expectedData = data || sample;
+    const excelMap = { ...expectedData };
+    const arrOfColLettersSample = Object.values(expectedData);
+    const arrOfTableNames = Object.keys(expectedData);
     for (let i = 0; i < arrOfColLettersSample.length; i++) {
       if (arrOfColLettersSample[i + 1] === undefined) {
         excelMap[arrOfTableNames[i]] = `${arrOfColLettersSample[i]}:${
@@ -159,14 +160,6 @@ excelController.convertInputs = async (req, res, next) => {
     }
     res.locals.inputCols = inputCols;
 
-    /*
-      const inputCols = {
-        tableName: {
-          column1:'test',
-          column2:"test2"
-        }
-      }
-       */
     return next();
   } catch (error) {
     return next({
@@ -231,19 +224,13 @@ excelController.getDataTypes = async (req, res, next) => {
     for (let col in res.locals.inputCols) {
       res.locals.colTypes[col] = getColType(res.locals.inputCols[col]);
     }
-    // console.log(res.locals.columnMap);
-    // res.json(res.locals.colTypes);
-    // console.log(res.locals.colTypes);
+
     const sample = { People: 'A', Species: 'I', Movies: 'Q' };
     const columnsArr = [];
     let data;
     if (req.body.document) data = JSON.parse(req.body.document);
-    res.locals.output = res.locals.colTypes;
-    // console.log(res.locals.columnMap);
-    /*
 
-    */
-    for (const key in sample) {
+    for (const key in data || sample) {
       tempObj = {};
       tempObj.tableName = key;
       tempObj.columns = [];
@@ -255,9 +242,7 @@ excelController.getDataTypes = async (req, res, next) => {
       const newObj = JSON.parse(JSON.stringify(tempObj));
       columnsArr.push(newObj);
     }
-    // for (const el of columnsArr) {
-    //   console.log(el.columns);
-    // }
+
     res.locals.output = columnsArr;
 
     return next();
@@ -272,91 +257,6 @@ excelController.getDataTypes = async (req, res, next) => {
 
 excelController.addIds = async (req, res, next) => {
   console.log('entering excelController.addIds');
-
-  // REPLACE WITH BRIAN'S INPUT AND REMOVE THIS
-  // res.locals.output = [
-  //   {
-  //     tableName: 'people',
-  //     columns: [
-  //       { name: 'VARCHAR(255)' },
-  //       { mass: 'FLOAT' },
-  //       { hair_color: 'VARCHAR(255)' },
-  //       { skin_color: 'VARCHAR(255)' },
-  //       { eye_color: 'VARCHAR(255)' },
-  //       { birth_year: 'VARCHAR(255)' },
-  //       { gender: 'VARCHAR(255)' },
-  //       { height: 'INT' },
-  //     ],
-  //   },
-  //   {
-  //     tableName: 'species',
-  //     columns: [
-  //       { name: 'VARCHAR(255)' },
-  //       { classification: 'VARCHAR(255)' },
-  //       { average_height: 'VARCHAR(255)' },
-  //       { average_lifespan: 'VARCHAR(255)' },
-  //       { hair_colors: 'VARCHAR(255)' },
-  //       { skin_colors: 'VARCHAR(255)' },
-  //       { eye_colors: 'VARCHAR(255)' },
-  //       { language: 'VARCHAR(255)' },
-  //     ],
-  //   },
-  //   {
-  //     tableName: 'films',
-  //     columns: [
-  //       { title: 'VARCHAR(255)' },
-  //       { director: 'VARCHAR(255)' },
-  //       { producer: 'VARCHAR(255)' },
-  //       { release_date: 'DATE' },
-  //     ],
-  //   },
-  // ];
-
-  // const rows = [];
-  // for (let currRow of res.locals.inputRows) {
-  //   const tempObj = { people: {}, species: {}, films: {} };
-  //   const people = [
-  //     'name',
-  //     'mass',
-  //     'hair_color',
-  //     'skin_color',
-  //     'eye_color',
-  //     'birth_year',
-  //     'gender',
-  //     'height',
-  //   ];
-  //   const species = [
-  //     'name2',
-  //     'classification',
-  //     'average_height',
-  //     'average_lifespan',
-  //     'hair_colors',
-  //     'skin_colors',
-  //     'eye_colors',
-  //     'language',
-  //   ];
-  //   const films = ['title', 'director', 'producer', 'release_date'];
-
-  //   for (let col of people) {
-  //     tempObj.people[col] = currRow[col];
-  //   }
-
-  //   for (let col of species) {
-  //     if (col === 'name2') {
-  //       tempObj.species.name = currRow[col];
-  //     } else {
-  //       tempObj.species[col] = currRow[col];
-  //     }
-  //   }
-
-  //   for (let col of films) {
-  //     tempObj.films[col] = currRow[col];
-  //   }
-
-  //   rows.push(tempObj);
-  // }
-  // res.locals.inputRows = rows;
-  // // REPLACE WITH BRIAN'S INPUT AND REMOVE THIS ^^^^
 
   try {
     for (let obj of res.locals.output) {

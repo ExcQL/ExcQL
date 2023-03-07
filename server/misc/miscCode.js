@@ -70,3 +70,87 @@ res.locals.output = [
     ],
   },
 ];
+
+// res.locals.output = [
+//   {
+//     tableName: 'people',
+//     columns: [
+//       { name: 'VARCHAR(255)' },
+//       { mass: 'FLOAT' },
+//       { hair_color: 'VARCHAR(255)' },
+//       { skin_color: 'VARCHAR(255)' },
+//       { eye_color: 'VARCHAR(255)' },
+//       { birth_year: 'VARCHAR(255)' },
+//       { gender: 'VARCHAR(255)' },
+//       { height: 'INT' },
+//     ],
+//   },
+//   {
+//     tableName: 'species',
+//     columns: [
+//       { name: 'VARCHAR(255)' },
+//       { classification: 'VARCHAR(255)' },
+//       { average_height: 'VARCHAR(255)' },
+//       { average_lifespan: 'VARCHAR(255)' },
+//       { hair_colors: 'VARCHAR(255)' },
+//       { skin_colors: 'VARCHAR(255)' },
+//       { eye_colors: 'VARCHAR(255)' },
+//       { language: 'VARCHAR(255)' },
+//     ],
+//   },
+//   {
+//     tableName: 'films',
+//     columns: [
+//       { title: 'VARCHAR(255)' },
+//       { director: 'VARCHAR(255)' },
+//       { producer: 'VARCHAR(255)' },
+//       { release_date: 'DATE' },
+//     ],
+//   },
+// ];
+
+// const rows = [];
+// for (let currRow of res.locals.inputRows) {
+//   const tempObj = { people: {}, species: {}, films: {} };
+//   const people = [
+//     'name',
+//     'mass',
+//     'hair_color',
+//     'skin_color',
+//     'eye_color',
+//     'birth_year',
+//     'gender',
+//     'height',
+//   ];
+//   const species = [
+//     'name2',
+//     'classification',
+//     'average_height',
+//     'average_lifespan',
+//     'hair_colors',
+//     'skin_colors',
+//     'eye_colors',
+//     'language',
+//   ];
+//   const films = ['title', 'director', 'producer', 'release_date'];
+
+//   for (let col of people) {
+//     tempObj.people[col] = currRow[col];
+//   }
+
+//   for (let col of species) {
+//     if (col === 'name2') {
+//       tempObj.species.name = currRow[col];
+//     } else {
+//       tempObj.species[col] = currRow[col];
+//     }
+//   }
+
+//   for (let col of films) {
+//     tempObj.films[col] = currRow[col];
+//   }
+
+//   rows.push(tempObj);
+// }
+// res.locals.inputRows = rows;
+// // REPLACE WITH BRIAN'S INPUT AND REMOVE THIS ^^^^
