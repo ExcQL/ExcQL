@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 
 import { RiFolderUploadFill } from 'react-icons/ri';
 
 import './InfoPanel.css';
+import store from '../context/store';
 
 const createMappingTemplate = (id) => {
   return { mappingId: id, tableName: '', fileColumn: '' };
@@ -16,6 +17,7 @@ const initialMappingState = {
 const InfoPanel = () => {
   const [mappingState, setMappingState] = useState(initialMappingState);
   const [uploadError, setUploadError] = useState(false);
+  const ctx = useContext(store);
 
   const uploadExcelHandler = async (e) => {
     try {
@@ -49,7 +51,7 @@ const InfoPanel = () => {
         body: excelFile,
       });
       const data = await response.json();
-      console.log(data);
+      ctx.updateData(data);
       if (uploadError) setUploadError(false);
     } catch (error) {
       console.error(error);
@@ -89,7 +91,9 @@ const InfoPanel = () => {
         Translating excel files to SQL script is as easy as 1, 2, 3!
       </p>
       <form className="info-panel__upload-form" onSubmit={uploadExcelHandler}>
-        <span className="info-panel__steps">Step 1: Upload your file</span>
+        <span className="info-panel__steps">
+          <strong>Step 1:</strong> Upload your file
+        </span>
         <label className="upload-form--container">
           <input
             type="file"
@@ -102,7 +106,7 @@ const InfoPanel = () => {
           <span id="file-name"></span>
         </label>
         <span className="info-panel__steps">
-          Step 2: Declare file columns to SQL tables mapping
+          <strong>Step 2:</strong> Declare file columns to SQL tables mapping
         </span>
         <p className="info-panel__instructions">
           How would you like your information to split into separate tables?
@@ -133,7 +137,7 @@ const InfoPanel = () => {
           </button>
         </div>
         <span className="info-panel__steps">
-          Step 3: Upload the file and watch magic happen!
+          <strong>Step 3:</strong> Upload the file and watch magic happen!
         </span>
         <div>
           {uploadError && (

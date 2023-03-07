@@ -1,5 +1,5 @@
 .script {
-  /* height: calc(100vh - 10%); */
+  display: none;
 }
 
 .script__script-container {
@@ -27,6 +27,10 @@
 .script__copy-btn:hover {
   transform: scale(1.1);
   background-color: #1b998a3f;
+}
+
+.active-script {
+  display: block;
 }
 
 .script__copied-text {
