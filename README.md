@@ -37,7 +37,7 @@ Highly recommended:
   - There is ability to add additional rows, but no functionality to delete
 - For sorting table/column mapping by column letter, ensure column AA occurs after Z, etc.
   - Excel adds one additional (of the same) letter to any column beyond Z. Currently, the app uses default sort method to sort user input regarding table to column mapping. The sorting approach should be revisited to ensure the application can put say, column AA after Z and column BBB after AA.
-- Dynamiccally removing anchors from the \_id columns that aren't serving as targets for edges/relationship connections.
+- For ER diagrams - dynamically removing anchors from the `_id` columns that aren't serving as targets for edges/relationship connections.
 
 Stretch Goals:
 
