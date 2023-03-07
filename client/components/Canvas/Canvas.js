@@ -13,7 +13,11 @@ const Canvas = ({ activeTab }) => {
 
   return (
     <section className="canvas">
-      {activeTab === `script` ? <Script /> : <Diagram tables={DUMMY_DATA} />}
+      {/* SWITCHING BETWEEN MOUNTING AND UNMOUNTING */}
+      {/* {activeTab === `script` ? <Script /> : <Diagram tables={DUMMY_DATA} />} */}
+      {/* SWITCHING BETWEEN DISPLAYING AND NOT DISPLAYING */}
+      <Script activeTab={activeTab} />
+      <Diagram tables={DUMMY_DATA} activeTab={activeTab} />
       {/* {activeTab === `script` ? (
         <Script />
       ) : (

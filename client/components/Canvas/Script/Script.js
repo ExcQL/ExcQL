@@ -9,7 +9,7 @@ const scriptStyle = {
   padding: '2rem',
 };
 
-const Script = () => {
+const Script = ({ activeTab }) => {
   const codeRef = useRef();
 
   const clickHandler = () => {
@@ -18,7 +18,7 @@ const Script = () => {
   };
 
   return (
-    <div className="script">
+    <div className={`script ${activeTab === `script` ? `active-script` : ``}`}>
       <div
         className="script__script-container"
         onClick={clickHandler}

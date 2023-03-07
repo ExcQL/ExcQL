@@ -1,4 +1,5 @@
 .script {
+  display: none;
 }
 
 .script__script-container {
@@ -26,4 +27,8 @@
 .script__copy-btn:hover {
   transform: scale(1.1);
   background-color: #1b998a3f;
+}
+
+.active-script {
+  display: block;
 }
