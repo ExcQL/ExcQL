@@ -147,6 +147,7 @@ excelController.convertInputs = async (req, res, next) => {
       const newObj = JSON.parse(JSON.stringify(rowObject));
       rows.push(newObj);
     }
+    // ROWS IS OUR FINAL ROW DATA
 
     // Rows contains objects for each entire row of data
     // Array that contains each row as an object
