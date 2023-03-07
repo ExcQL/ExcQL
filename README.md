@@ -46,3 +46,5 @@ Stretch Goals:
   - The parsing algorithm for receiving and processing excel file could use the most refactoring
 - Add test suite; if functions are modularized enough backend unit tests should be possible
 - Ability to handle multiple file inputs (currently only support uploading one file at a time)
+- Implement a DB where users can store generated SQL scripts and diagram data for future rendering.
+- 
