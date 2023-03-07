@@ -83,7 +83,7 @@ input[type='file'] {
 }
 
 .info-panel__error {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   font-size: 1.8rem;
   text-align: center;
   font-weight: bold;
