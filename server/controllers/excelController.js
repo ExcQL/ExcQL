@@ -214,7 +214,7 @@ excelController.addIds = async (req, res, next) => {
       // add id col to each table
       obj.columns.unshift({
         _id: {
-          primaryKey: true, type: 'INT'
+          primaryKey: true, type: 'SERIAL'
         }
       })
     }
