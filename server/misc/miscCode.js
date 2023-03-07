@@ -32,3 +32,41 @@ for (const dataPoint in excelObj) {
   }
   prevRow = currRowNumber;
 }
+const a = {
+  _id: 4,
+  title: 'Revenge of the Sith',
+  episode_id: 3,
+  director: 'George Lucas',
+  producer: 'Rick McCallum',
+  release_date: '2005-05-19T07:00:00.000Z',
+};
+const rows = [
+  {
+    people: {
+      name: 'Luke Skywalker',
+      mass: 77,
+      hair_color: 'blond',
+      skin_color: 'fair',
+      eye_color: 'blue',
+      birth_year: '19BBY',
+      gender: 'male',
+      height: 172,
+    },
+    species: {
+      name: 'Human',
+      classification: 'mammal',
+      average_height: 180,
+      average_lifespan: 120,
+      hair_colors: 'blonde, brown, black, red',
+      skin_colors: 'caucasian, black, asian, hispanic',
+      eye_colors: 'brown, blue, green, hazel, grey, amber',
+      language: 'Galactic Basic',
+    },
+    films: {
+      title: 'A New Hope',
+      director: 'George Lucas',
+      producer: 'Gary Kurtz, Rick McCallum',
+      release_date: '1977-05-25T04:00:00.000Z',
+    },
+  },
+];
