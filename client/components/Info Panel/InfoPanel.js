@@ -46,13 +46,10 @@ const InfoPanel = () => {
       excelFile.append('document', JSON.stringify(sortedTableToColumnMapping));
       //SPECIFIC BACKEND ENDPOINT NEEDED TO MAKE PASSING REQUEST
       //TODO: Need to change fetch request URL
-      const response = await fetch(
-        `https://jsonplaceholder.typicode.com/posts`,
-        {
-          method: 'POST',
-          body: excelFile,
-        }
-      );
+      const response = await fetch(`/api`, {
+        method: 'POST',
+        body: excelFile,
+      });
       const data = await response.json();
       ctx.updateData(data);
       if (uploadError) setUploadError(false);
