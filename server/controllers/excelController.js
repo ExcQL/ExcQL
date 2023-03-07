@@ -352,7 +352,7 @@ excelController.getRelationships = async (req, res, next) => {
         const joinTableName = `${relTables[0]}_${relTables[1]}`;
         const joinTable = {
           tableName: joinTableName,
-          columns: [{ "_id": { primaryKey: true, type: 'INT' } }]
+          columns: [{ "_id": { primaryKey: true, type: 'SERIAL' } }]
         };
 
         res.locals.output.push(joinTable);
