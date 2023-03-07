@@ -138,47 +138,13 @@ excelController.getDataTypes = async (req, res, next) => {
   }
 };
 
-excelController.getRelationships = async (req, res, next) => {
-  console.log('entering excelController.tableLogic');
+excelController.addIds = async (req, res, next) => {
+  console.log('entering excelController.addIds');
 
-  // const tableData = {
-  //   'name': 'people',
-  //   'mass': 'people',
-  //   'hair_color': 'people',
-  //   'skin_color': 'people',
-  //   'eye_color': 'people',
-  //   'birth_year': 'people',
-  //   'gender': 'people',
-  //   'height': 'people',
-  //   'name2': 'species',
-  //   'classification': 'species',
-  //   'average_height': 'species',
-  //   'average_lifespan': 'species',
-  //   'hair_colors': 'species',
-  //   'skin_colors': 'species',
-  //   'eye_colors': 'species',
-  //   'language': 'species',
-  //   'title': 'films',
-  //   'director': 'films',
-  //   'producer': 'films',
-  //   'release_date': 'films'
-  // }
-
-  // // get array of distinct tables by first filtering thru a set
-  // const tables = Array.from(new Set(Object.values(tableData)));
-  // const output = [];
-  // for (let table of tables) {
-  //   output.push({
-  //     table: table,
-  //     columns: [
-
-  //     ]
-  //   })
-  // }
-
-  const output = [
+  // REPLACE WITH BRIAN'S INPUT AND REMOVE THIS
+  res.locals.output = [
     {
-      table: 'people',
+      tableName: 'people',
       columns: [
         { name: "VARCHAR(255)" },
         { mass: "FLOAT" },
@@ -191,7 +157,7 @@ excelController.getRelationships = async (req, res, next) => {
       ]
     },
     {
-      table: 'species',
+      tableName: 'species',
       columns: [
         { name: "VARCHAR(255)" },
         { classification: "VARCHAR(255)" },
@@ -204,7 +170,7 @@ excelController.getRelationships = async (req, res, next) => {
       ]
     },
     {
-      table: 'films',
+      tableName: 'films',
       columns: [
         { title: "VARCHAR(255)" },
         { director: "VARCHAR(255)" },
@@ -214,51 +180,197 @@ excelController.getRelationships = async (req, res, next) => {
     }
   ]
 
-  console.log(output);
-  res.json(res.locals);
+  const rows = [];
+  for (let currRow of res.locals.inputRows) {
+    const tempObj = { people: {}, species: {}, films: {} }
+    const people = ['name', 'mass', 'hair_color', 'skin_color', 'eye_color', 'birth_year', 'gender', 'height']
+    const species = ['name2', 'classification', 'average_height', 'average_lifespan', 'hair_colors', 'skin_colors', 'eye_colors', 'language']
+    const films = ['title', 'director', 'producer', 'release_date']
+
+    for (let col of people) {
+      tempObj.people[col] = currRow[col];
+    }
+
+    for (let col of species) {
+      if (col === 'name2') {
+        tempObj.species.name = currRow[col];
+      } else {
+        tempObj.species[col] = currRow[col];
+      }
+    }
+
+    for (let col of films) {
+      tempObj.films[col] = currRow[col];
+    }
+
+    rows.push(tempObj)
+  }
+  res.locals.inputRows = rows;
+  // REPLACE WITH BRIAN'S INPUT AND REMOVE THIS ^^^^
 
 
-  /*  OUTPUT:
-const DUMMY_DATA = [
-  {
-    table: {
-      tableName: 'table1name',
-      columns: [
-        { column1Name: { primaryKey: true, type: 'number' } },
-        { column2Name: 'string' },
-        { column3Name: 'number' },
-        { column4Name: 'boolean' },
-        {
-          column5Name: {
-            linkedTable: 'table2Name.column1Name',
-            type: 'number',
-          },
-        },
-      ],
-    },
-  },
-  {
-    table: {
-      tableName: 'table2name',
-      columns: [
-        { column1Name: { primaryKey: true, type: 'number' } },
-        { column2Name: 'string' },
-      ],
-    },
-  },
-  {
-    table: {
-      tableName: 'table3name',
-      columns: [
-        { column1Name: { primaryKey: true, type: 'number' } },
-        { column2Name: 'number' },
-        { column3Name: 'string' },
-        { column4Name: 'boolean' },
-      ],
-    },
-  },
-];
-  */
+  try {
+    for (let obj of res.locals.output) {
+      // add id col to each table
+      obj.columns.unshift({
+        _id: {
+          primaryKey: true, type: 'SERIAL'
+        }
+      })
+    }
+    return next();
+  } catch (error) {
+    return next({
+      log: `Controller error in excelController.addIds: ${error}`,
+      status: 400,
+      message: { err: error },
+    });
+  }
+}
+
+excelController.calcUniqueRows = async (req, res, next) => {
+  console.log('entering excelController.calcUniqueRows');
+
+  try {
+    // can tableNames be passed in from another res.locals?
+    const tableNames = [];
+    for (let key in res.locals.inputRows[0]) {
+      tableNames.push(key);
+    }
+
+    // calculate the number of unique rows in each table
+    const uniqueRowsInTables = {};
+    for (let tableName of tableNames) {
+      const set = new Set;
+      for (let row of res.locals.inputRows) {
+        set.add(JSON.stringify(row[tableName]))
+      }
+      uniqueRowsInTables[tableName] = set.size;
+    }
+    res.locals.uniqueRowsInTables = uniqueRowsInTables;
+
+    // returns an array of all combinations of 2 tables as we need to compare each table vs every other table
+    const tablePairs = new Iter(tableNames).combinations(2).toArray();
+
+    // calculate the number of unique rows in each combination of two tables
+    const uniqueRowsInTablePairs = {};
+    for (let pair of tablePairs) {
+      const set = new Set;
+      for (let row of res.locals.inputRows) {
+        // get a stringified copy of the current row that only includes the col names in the selected table pair
+        const rowCopy = JSON.stringify(pair.reduce((newRow, key) =>
+          (newRow[key] = row[key], newRow)
+          , {}));
+
+        // add copied row to set
+        set.add(rowCopy);
+      }
+      uniqueRowsInTablePairs[pair] = set.size;
+    }
+    res.locals.uniqueRowsInTablePairs = uniqueRowsInTablePairs;
+
+    return next();
+  } catch (error) {
+    return next({
+      log: `Controller error in excelController.getcalcUniqueRows: ${error}`,
+      status: 400,
+      message: { err: error },
+    });
+  }
+}
+
+excelController.getRelationships = async (req, res, next) => {
+  console.log('entering excelController.getRelationships');
+
+  try {
+    const relationships = [];
+    for (let pair in res.locals.uniqueRowsInTablePairs) {
+      const tables = pair.split(',')
+      const pairCount = res.locals.uniqueRowsInTablePairs[pair];
+      const leftTableCount = res.locals.uniqueRowsInTables[tables[0]]
+      const rightTableCount = res.locals.uniqueRowsInTables[tables[1]]
+      const tempObj = {};
+
+      if (pairCount > leftTableCount && pairCount > rightTableCount) {
+        tempObj[tables[0]] = 'many';
+        tempObj[tables[1]] = 'many';
+        relationships.push(tempObj);
+      } else if (pairCount === leftTableCount && pairCount > rightTableCount) {
+        tempObj[tables[0]] = 'one';
+        tempObj[tables[1]] = 'many';
+        relationships.push(tempObj);
+      } else if (pairCount > leftTableCount && pairCount === rightTableCount) {
+        tempObj[tables[0]] = 'many';
+        tempObj[tables[1]] = 'one';
+        relationships.push(tempObj);
+      } else if (leftTableCount === rightTableCount) {
+        tempObj[tables[0]] = 'one';
+        tempObj[tables[1]] = 'one';
+        relationships.push(tempObj);
+      }
+    }
+
+    // adds foreign key to left table, which points to right table's primary key
+    const addForeignKey = (leftTableName, rightTableName) => {
+      for (let obj of res.locals.output) {
+        if (obj.tableName === leftTableName) {
+          foreignKeyObj = {};
+          foreignKeyObj[(`${rightTableName}_id`)] = {
+            linkedTable: `${rightTableName}._id`,
+            type: 'INT'
+          }
+
+          obj.columns.push(foreignKeyObj);
+        }
+      }
+    };
+
+    for (let relationship of relationships) {
+      const relType = new Set(Object.values(relationship));
+      const relTables = Object.keys(relationship)
+
+      // if relationship is one-many, left table becomes "one" and right table becomes "many"
+      if (relType.has('one') && relType.has('many')) {
+        let leftTableName;
+        let rightTableName;
+        for (let tableName in relationship) {
+          if (relationship[tableName] === 'one') leftTableName = tableName;
+          else rightTableName = tableName;
+        }
+
+        addForeignKey(leftTableName, rightTableName);
+      }
+
+      // if relationship is one-one, use the first table as the left table
+      // opportunity for improvement here - get user input on which table is the left table and/or let them update it after the fact and regenerate sql
+      else if (relType.has('one')) {
+        addForeignKey(relTables[0], relTables[1])
+      }
+
+      // if relationship is many-many, add join table, then add both foreign keys to join table
+      else if (relType.has('many')) {
+        const joinTableName = `${relTables[0]}_${relTables[1]}`;
+        const joinTable = {
+          tableName: joinTableName,
+          columns: [{ "_id": { primaryKey: true, type: 'SERIAL' } }]
+        };
+
+        res.locals.output.push(joinTable);
+
+        addForeignKey(joinTableName, relTables[0])
+        addForeignKey(joinTableName, relTables[1])
+      }
+    }
+
+    // res.json(res.locals.output)
+    return next();
+  } catch (error) {
+    return next({
+      log: `Controller error in excelController.getRelationships: ${error}`,
+      status: 400,
+      message: { err: error },
+    });
+  }
 };
 
 module.exports = excelController;

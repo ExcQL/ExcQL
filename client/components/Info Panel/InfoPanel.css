@@ -28,6 +28,7 @@
   margin-bottom: 2rem;
   font-family: var(--description-font);
   text-align: left;
+  font-weight: 700;
 }
 
 .info-panel__instructions {
@@ -83,7 +84,7 @@ input[type='file'] {
 }
 
 .info-panel__error {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   font-size: 1.8rem;
   text-align: center;
   font-weight: bold;
@@ -108,7 +109,7 @@ input[type='file'] {
   display: flex;
   justify-content: space-around;
   text-align: center;
-  padding-right: 0.6rem;
+  padding-left: 0.5rem;
   margin-bottom: 0.5rem;
   font-size: 1.4rem;
 }
