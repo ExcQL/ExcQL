@@ -169,7 +169,7 @@ excelController.convertInputs = async (req, res, next) => {
     });
   }
 };
-
+//
 excelController.getDataTypes = async (req, res, next) => {
   console.log('entering excelController.getDataTypes');
   // console.log(res.locals.inputCols['release_date']);
