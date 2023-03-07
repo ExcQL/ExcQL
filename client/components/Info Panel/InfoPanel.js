@@ -5,7 +5,7 @@ import { RiFolderUploadFill } from 'react-icons/ri';
 import './InfoPanel.css';
 
 const createMappingTemplate = (id) => {
-  return { mappingId: id, fileColumn: '', tableName: '' }
+  return { mappingId: id, tableName: '', fileColumn: '' }
 };
 
 const initialMappingState = {
@@ -20,14 +20,26 @@ const InfoPanel = () => {
   const uploadExcelHandler = async (e) => {
     try {
       e.preventDefault();
-
       const files = e.target.files.files;
+      if (files.length === 0) throw new Error('No file uploaded.')
       const excelFile = new FormData();
       excelFile.append('excel', files[0]);
-      //ADDED FOR EXTRA INFO PURPOSES
-      excelFile.append('document', JSON.stringify({ People: 'B9' }));
 
+      const columnToTableMapping = mappingState
+        .mapping
+        .reduce((outputObj, { tableName, fileColumn }) => {
+          if (tableName !== '' && fileColumn !== '') outputObj[fileColumn] = tableName;
+          return outputObj;
+        }, {});
+
+      const sortedTableToColumnMapping = Object.keys(columnToTableMapping).sort().reduce((outputObj, key) => {
+        outputObj[columnToTableMapping[key]] = key;
+        return outputObj;
+      }, {});
+
+      excelFile.append('document', JSON.stringify(sortedTableToColumnMapping));
       //SPECIFIC BACKEND ENDPOINT NEEDED TO MAKE PASSING REQUEST
+      //TODO: Need to change fetch request URL
       const response = await fetch(
         `https://jsonplaceholder.typicode.com/posts`,
         {
@@ -37,6 +49,7 @@ const InfoPanel = () => {
       );
       const data = await response.json();
       console.log(data);
+      if (uploadError) setUploadError(false);
     } catch (error) {
       console.error(error);
       setUploadError(true);
@@ -64,7 +77,6 @@ const InfoPanel = () => {
     setMappingState({ ...mappingState, mapping: [...mappingState.mapping, createMappingTemplate(newId)], nextMappingId: newId });
   }
 
-  console.log(mappingState);
   return (
     <section className="info-panel">
       <h1 className="info-panel__main-heading">ExcQL</h1>
@@ -87,11 +99,16 @@ const InfoPanel = () => {
           How would you like your information to split into separate tables?
           Open your file in Excel. Put in the column letter that corresponds to the start of a table
           under "Column Letter", and then input a table name of your choice under "Table Name" in the same row.
+          <br />
+          <b>
+            The content included in the table is assumed between the columns stated from left to right.
+            Only complete sets of table to column mappings are considered.
+          </b>
         </p>
         <div className="mapping-input--container">
           <header>
-            <span>Column Letter</span>
             <span>Table Name</span>
+            <span>Column Letter</span>
           </header>
           {mappingState.mapping.map(record =>
             <MappingInput key={record.mappingId} id={record.mappingId} handleInputChange={handleInputChange} />
@@ -102,17 +119,19 @@ const InfoPanel = () => {
         <span className="info-panel__steps">
           Step 3: Upload the file and watch magic happen!
         </span>
+        <div>
+          {uploadError && (
+            <p className="info-panel__error">
+              Uh oh! 😭 Upload failed. Please try again.
+            </p>
+          )}
+        </div>
         <div className="upload-form--container">
           <button type="submit" className="info-panel__upload-btn">
             Upload!
           </button>
         </div>
       </form>
-      {uploadError && (
-        <p className="info-panel__error">
-          Uh oh! 😭 Upload failed. Please try again.
-        </p>
-      )}
     </section>
   );
 };
@@ -121,8 +140,8 @@ const MappingInput = (props) => {
   const { id, handleInputChange } = props;
   return (
     <div className='input-container'>
-      <input id={id} name='fileColumn' type='text' onChange={handleInputChange} />
-      <input id={id} name='tableName' type='text' onChange={handleInputChange} />
+      <input id={id} name='tableName' type='text' onChange={handleInputChange} required={id === 0} />
+      <input id={id} name='fileColumn' type='text' onChange={handleInputChange} required={id === 0} />
     </div>
   );
 }
