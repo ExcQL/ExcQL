@@ -49,7 +49,8 @@ excelController.convertInputs = async (req, res, next) => {
   try {
     const sample = { People: 'A', Species: 'I', Movies: 'Q' };
     const inputCols = {};
-    const data = JSON.parse(req.body.document);
+    let data;
+    if (req.body.document) data = JSON.parse(req.body.document);
 
     const arrOfColumnLetters = [];
     const arrOfColumnNames = [];
@@ -58,8 +59,7 @@ excelController.convertInputs = async (req, res, next) => {
       arrOfColumnNames.push(column);
     }
 
-    // Gets column letters
-
+    // Gets column letters and assign columns names to letters
     const objColumnLettersToNames = {};
     for (const column in res.locals.raw[res.locals.targetSheet]) {
       if (column !== '!ref' && column !== '!merges!') {
@@ -78,10 +78,9 @@ excelController.convertInputs = async (req, res, next) => {
     }
 
     // Gets table boundaries
-
-    const excelMap = { ...data };
-    const arrOfColLettersSample = Object.values(data);
-    const arrOfTableNames = Object.keys(data);
+    const excelMap = { ...(data || sample) };
+    const arrOfColLettersSample = Object.values(data || sample);
+    const arrOfTableNames = Object.keys(data || sample);
     for (let i = 0; i < arrOfColLettersSample.length; i++) {
       if (arrOfColLettersSample[i + 1] === undefined) {
         excelMap[arrOfTableNames[i]] = `${arrOfColLettersSample[i]}:${
@@ -95,7 +94,7 @@ excelController.convertInputs = async (req, res, next) => {
         )}`.split(':');
       }
     }
-    // console.log(excelMap);
+
     for (const table in excelMap) {
       for (let i = 0; i < excelMap[table].length; i++) {
         let curr = excelMap[table][i];
@@ -121,33 +120,22 @@ excelController.convertInputs = async (req, res, next) => {
       }
     }
 
-    // console.log(res.locals.inputRows);
-    // console.log(colNameToIndexMap);
-    // console.log(arrOfColumnNames);
-    // console.log(excelMap);
-
     const rows = [];
 
     const rowObject = {};
     for (const tablenames of arrOfTableNames) {
       rowObject[tablenames] = {};
     }
-    // console.log(excelMap);
-    // console.log('OCLTN:', objColumnLettersToNames);
-    // console.log(columnMap);
+
     for (const row of res.locals.inputRows) {
-      // row is each row
-      // Iterates and reads through every row
       for (const columnName in row) {
-        // columName is each property
         rowObject[columnMap[columnName]][columnName] = row[columnName];
-        // console.log('rt:', rowObject[columnMap[columnName]][columnName]);
       }
-      // console.log('r:', rowObject);
       const newObj = JSON.parse(JSON.stringify(rowObject));
       rows.push(newObj);
     }
     // ROWS IS OUR FINAL ROW DATA
+    // console.log(rows);
 
     // Rows contains objects for each entire row of data
     // Array that contains each row as an object
