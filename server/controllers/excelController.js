@@ -49,7 +49,8 @@ excelController.convertInputs = async (req, res, next) => {
   try {
     const sample = { People: 'A', Species: 'I', Movies: 'Q' };
     const inputCols = {};
-    // const data = JSON.parse(req.body.TableInfo);
+    const data = JSON.parse(req.body.document);
+
     const arrOfColumnLetters = [];
     const arrOfColumnNames = [];
     // Gets column names
@@ -78,9 +79,9 @@ excelController.convertInputs = async (req, res, next) => {
 
     // Gets table boundaries
 
-    const excelMap = { ...sample };
-    const arrOfColLettersSample = Object.values(sample);
-    const arrOfTableNames = Object.keys(sample);
+    const excelMap = { ...data };
+    const arrOfColLettersSample = Object.values(data);
+    const arrOfTableNames = Object.keys(data);
     for (let i = 0; i < arrOfColLettersSample.length; i++) {
       if (arrOfColLettersSample[i + 1] === undefined) {
         excelMap[arrOfTableNames[i]] = `${arrOfColLettersSample[i]}:${
@@ -146,7 +147,6 @@ excelController.convertInputs = async (req, res, next) => {
       const newObj = JSON.parse(JSON.stringify(rowObject));
       rows.push(newObj);
     }
-    console.log(rows);
 
     // Rows contains objects for each entire row of data
     // Array that contains each row as an object
