@@ -153,7 +153,7 @@ excelController.convertInputs = async (req, res, next) => {
     for (const column of res.locals.inputRows) {
       for (const key in column) {
         if (key === 'release_date') {
-          let dateString = (column[key] + ' ').slice(0, 15);
+          let dateString = column[key] + ' ';
           inputCols[key].push(dateString);
         } else inputCols[key].push(column[key]);
       }
@@ -242,7 +242,7 @@ excelController.getDataTypes = async (req, res, next) => {
       const newObj = JSON.parse(JSON.stringify(tempObj));
       columnsArr.push(newObj);
     }
-
+    for (const el of columnsArr) console.log(el.columns);
     res.locals.output = columnsArr;
 
     return next();
