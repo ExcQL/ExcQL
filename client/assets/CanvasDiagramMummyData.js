@@ -30,9 +30,12 @@ const DUMMY_DATA = [
         gender: 'VARCHAR(255)',
       },
       {
-        height: {
-          linkedTable: 'species.average_height',
-          type: 'INT',
+        height: 'INT',
+      },
+      {
+        species_id: {
+          linkedTable: 'species._id',
+          type: 'SERIAL',
         },
       },
     ],
@@ -92,6 +95,52 @@ const DUMMY_DATA = [
       },
       {
         release_date: 'DATE',
+      },
+    ],
+  },
+  {
+    tableName: 'people_films',
+    columns: [
+      {
+        _id: {
+          primaryKey: true,
+          type: 'SERIAL',
+        },
+      },
+      {
+        people_id: {
+          linkedTable: 'people._id',
+          type: 'SERIAL',
+        },
+      },
+      {
+        films_id: {
+          linkedTable: 'films._id',
+          type: 'SERIAL',
+        },
+      },
+    ],
+  },
+  {
+    tableName: 'species_films',
+    columns: [
+      {
+        _id: {
+          primaryKey: true,
+          type: 'SERIAL',
+        },
+      },
+      {
+        species_id: {
+          linkedTable: 'species._id',
+          type: 'SERIAL',
+        },
+      },
+      {
+        films_id: {
+          linkedTable: 'films._id',
+          type: 'SERIAL',
+        },
       },
     ],
   },

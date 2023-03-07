@@ -16,7 +16,7 @@ const nodeTypes = {
   tableNode: TableNode,
 };
 
-const Diagram = ({ tables }) => {
+const Diagram = ({ tables, activeTab }) => {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
 
@@ -57,7 +57,9 @@ const Diagram = ({ tables }) => {
   );
 
   return (
-    <div className="diagram">
+    <div
+      className={`diagram ${activeTab === `diagram` ? `active-diagram` : ``}`}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
