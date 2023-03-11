@@ -1,3 +1,7 @@
+/**
+ * @jest-environment node
+ */
+
 const { composeSqlQuery } = require('../server/controllers/sqlController');
 
 describe('SQL Query generation unit tests', () => {

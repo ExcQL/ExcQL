@@ -14,6 +14,46 @@ const initialMappingState = {
   nextMappingId: 3,
 };
 
+export const sortExcelColumnLetters = (array) => {
+  return array.sort((objA, objB) => {
+    const objAValues = Object.values(objA);
+    const objBValues = Object.values(objB);
+    const isCorrectFormat = objAValues.length === 1 &&
+      objBValues.length === 1 &&
+      typeof objAValues[0] === 'string' &&
+      typeof objBValues[0] === 'string';
+    if (!isCorrectFormat) throw new Error('Column letter not in correct format (expected "string").');
+    const a = objAValues[0];
+    const b = objBValues[0];
+    if (a === b) throw new Error('No duplicate column letters allowed.');
+    const lengthA = a.length;
+    const lengthB = b.length;
+    if (
+      lengthA < lengthB ||
+      (a.length === b.length && a < b)
+    ) return -1;
+    return 1;
+  });
+}
+
+export const sortTableToColumnMappingInput = (mapping) => {
+  const columnToTableArray = mapping.reduce(
+    (outputObj, { tableName, fileColumn }) => {
+      if (tableName !== '' && fileColumn !== '') {
+        if (
+          outputObj.map(obj => Object.keys(obj)[0]).includes(tableName)
+        ) throw new Error('Duplicate table name found');
+        const mapping = {};
+        mapping[tableName] = fileColumn;
+        outputObj.push(mapping);
+      }
+      return outputObj;
+    },
+    []
+  );
+  return Object.assign({}, ...sortExcelColumnLetters(columnToTableArray));
+}
+
 const InfoPanel = () => {
   const [mappingState, setMappingState] = useState(initialMappingState);
   const [uploadError, setUploadError] = useState(false);
@@ -26,24 +66,12 @@ const InfoPanel = () => {
       if (files.length === 0) throw new Error('No file uploaded.');
       const excelFile = new FormData();
       excelFile.append('excel', files[0]);
-
-      const columnToTableMapping = mappingState.mapping.reduce(
-        (outputObj, { tableName, fileColumn }) => {
-          if (tableName !== '' && fileColumn !== '')
-            outputObj[fileColumn] = tableName;
-          return outputObj;
-        },
-        {}
+      excelFile.append(
+        'document',
+        JSON.stringify(
+          sortTableToColumnMappingInput(mappingState.mapping)
+        )
       );
-
-      const sortedTableToColumnMapping = Object.keys(columnToTableMapping)
-        .sort()
-        .reduce((outputObj, key) => {
-          outputObj[columnToTableMapping[key]] = key;
-          return outputObj;
-        }, {});
-
-      excelFile.append('document', JSON.stringify(sortedTableToColumnMapping));
       //SPECIFIC BACKEND ENDPOINT NEEDED TO MAKE PASSING REQUEST
       //TODO: Need to change fetch request URL
       const response = await fetch(`/api`, {
