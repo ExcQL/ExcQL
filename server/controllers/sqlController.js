@@ -139,35 +139,35 @@ sqlController.getRelationships = (_, res, next) => {
 
       const relationships = [];
       for (let pair in tablePairData) {
-        const tables = pair.split(',');
+        const [leftTable, rightTable] = pair.split(',');
         const pairCount = tablePairData[pair];
-        const leftTableCount = rowData[tables[0]];
-        const rightTableCount = rowData[tables[1]];
+        const leftTableCount = rowData[leftTable];
+        const rightTableCount = rowData[rightTable];
         const tempObj = {};
 
         if (pairCount > leftTableCount && pairCount > rightTableCount) {
-          tempObj[tables[0]] = 'many';
-          tempObj[tables[1]] = 'many';
-          relationships.push(tempObj);
+          tempObj[leftTable] = 'many';
+          tempObj[rightTable] = 'many';
         } else if (
           pairCount === leftTableCount &&
           pairCount > rightTableCount
         ) {
-          tempObj[tables[0]] = 'one';
-          tempObj[tables[1]] = 'many';
-          relationships.push(tempObj);
+          tempObj[leftTable] = 'one';
+          tempObj[rightTable] = 'many';
         } else if (
           pairCount > leftTableCount &&
           pairCount === rightTableCount
         ) {
-          tempObj[tables[0]] = 'many';
-          tempObj[tables[1]] = 'one';
-          relationships.push(tempObj);
+          tempObj[leftTable] = 'many';
+          tempObj[rightTable] = 'one';
         } else if (leftTableCount === rightTableCount) {
-          tempObj[tables[0]] = 'one';
-          tempObj[tables[1]] = 'one';
-          relationships.push(tempObj);
-        }
+          tempObj[leftTable] = 'one';
+          tempObj[rightTable] = 'one';
+        } else
+          throw new Error(
+            `Unknown relationship between ${leftTable} and ${rightTable}`
+          );
+        relationships.push(tempObj);
       }
       // adds foreign key to left table, which points to right table's primary key
       const addForeignKey = (leftTableName, rightTableName) => {
@@ -183,7 +183,7 @@ sqlController.getRelationships = (_, res, next) => {
         }
       };
 
-      for (let relationship of relationships) {
+      relationships.forEach((relationship) => {
         const relType = new Set(Object.values(relationship));
         const relTables = Object.keys(relationship);
 
@@ -218,7 +218,7 @@ sqlController.getRelationships = (_, res, next) => {
           addForeignKey(joinTableName, relTables[0]);
           addForeignKey(joinTableName, relTables[1]);
         }
-      }
+      });
     }
     return next();
   } catch (error) {
