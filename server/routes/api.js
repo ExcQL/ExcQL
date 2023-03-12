@@ -6,6 +6,7 @@ const parse = multer();
 // We use multer to handle our data to our parser XLSX which is
 // used in excelController.read
 const excelController = require('../controllers/excelController');
+const { sqlController } = require('../controllers/sqlController');
 
 router.get('/', (req, res) => {});
 router.post(
@@ -13,9 +14,9 @@ router.post(
   parse.any(),
   excelController.read,
   excelController.processFile,
-  excelController.addIds,
-  excelController.calcUniqueRows,
-  excelController.getRelationships,
+  sqlController.addIds,
+  sqlController.calcUniqueRows,
+  sqlController.getRelationships,
   (req, res) => {
     res.json(res.locals.dataTypes);
   }
