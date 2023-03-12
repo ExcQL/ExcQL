@@ -105,7 +105,7 @@ input[type='file'] {
   justify-content: space-around;
 }
 
-.mapping-input--container>header {
+.mapping-input--container > header {
   display: flex;
   justify-content: space-around;
   text-align: center;
@@ -114,7 +114,7 @@ input[type='file'] {
   font-size: 1.4rem;
 }
 
-input[type=text] {
+input[type='text'] {
   width: 40%;
   background-color: var(--canvas-bg);
   border: 1px solid #656176;
@@ -137,4 +137,35 @@ input[type=text] {
 #more-inputs:hover {
   background-color: var(--nav-text-color);
   color: var(--nav-bg);
+}
+
+.info-panel__spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lds-dual-ring {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+}
+.lds-dual-ring:after {
+  content: ' ';
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border-radius: 50%;
+  border: 6px solid var(--text-color-dark);
+  border-color: var(--text-color-dark) transparent;
+  animation: lds-dual-ring 1.2s linear infinite;
+}
+@keyframes lds-dual-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
