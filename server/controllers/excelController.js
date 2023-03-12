@@ -1,39 +1,61 @@
 const xlsx = require('xlsx'); // xlsx read/write parser
 const Iter = require('es-iter'); // tool for calculating combinations
-const { table } = require('console');
 
 const excelController = {};
 
-excelController.read = async (req, res, next) => {
+const getColType = (colArr) => {
+  // if data can coerce to date, date
+  // if any piece of data is a string, set to varchar and exit
+  // if there are conflicting data types, set to varchar and exit
+  // if data is all numbers, check against floor -> if all nums === their floor, int, else float
+  // if data is all t/f, bool
+  let tempType;
+  let numType;
+  for (let val of colArr) {
+    let currType;
+
+    // get type of current data point
+    if (!isNaN(Number(val))) currType = 'number';
+    else if (Date.parse(val)) currType = 'date';
+    else if (typeof val === 'boolean' || val === 'true' || val === 'false')
+      currType = 'boolean';
+    else currType = 'string';
+
+    // compare to tempType (set in previous iterations of switch statement below)
+    // if there are discrepancies default to string (varchar)
+    if (tempType && currType !== tempType) return 'VARCHAR(255)';
+
+    // further logic per type
+    switch (currType) {
+      case 'string':
+        return 'VARCHAR(255)';
+      case 'number':
+        tempType = 'number';
+        if (numType != 'float' && val === Math.floor(val)) {
+          numType = 'int';
+        } else {
+          numType = 'float';
+        }
+        break;
+      default:
+        tempType = currType;
+    }
+  }
+
+  if (tempType === 'number') return numType.toUpperCase();
+  return tempType.toUpperCase();
+};
+
+excelController.read = (req, res, next) => {
   console.log('entering excelController.read');
   try {
-    // Create an empty object so we can store multiple sheets in our res.locals
-    // if necessary.
-    res.locals.parsedXlsxToJSON = {};
-    res.locals.raw = {};
-    res.locals.targetSheet = {};
     // When passed in data comes from multer, it is stored on req.files
     const { buffer } = req.files[0];
     //Read the buffer and access the data.
-    const excelArrOfSheets = xlsx.read(buffer, {
+    res.locals.raw = xlsx.read(buffer, {
       cellHTML: false,
       cellDates: true,
     }).Sheets;
-
-    // Convert read XLSX to JSON and store the array of JSON objects in
-    // a key associated with the sheet name.
-    for (const sheet in excelArrOfSheets) {
-      res.locals.raw[`${sheet}`] = excelArrOfSheets[sheet];
-      const jsonData = xlsx.utils.sheet_to_json(excelArrOfSheets[sheet], {
-        header: 0,
-        defval: '',
-      });
-      res.locals.targetSheet = sheet;
-      res.locals.parsedXlsxToJSON[`${sheet}`] = jsonData;
-      //res.locals.parsedXlsxToJSON['INSERT_SHEET_NAME_HERE'];
-    }
-
-    res.locals.inputRows = res.locals.parsedXlsxToJSON[res.locals.targetSheet];
     return next();
   } catch (error) {
     return next({
@@ -44,228 +66,151 @@ excelController.read = async (req, res, next) => {
   }
 };
 
-excelController.convertInputs = async (req, res, next) => {
-  console.log('entering excelController.convertInputs');
+excelController.processFile = (_, res, next) => {
+  console.log('entering excelController.processFile');
   try {
-    const sample = { People: 'A', Species: 'I', Movies: 'Q' };
-    const inputCols = {};
-    let data;
-    if (req.body.document) data = JSON.parse(req.body.document);
+    const cleanColumnLetter = (letter) => letter.replace(/[0-9]/g, '');
+    const isColumnNameRow = (letter) => /.*1$/.test(letter);
 
-    const arrOfColumnLetters = [];
-    const arrOfColumnNames = [];
-    // Gets column names
-    for (const column in res.locals.inputRows[0]) {
-      arrOfColumnNames.push(column);
-    }
-
-    // Gets column letters and assign columns names to letters
-    const objColumnLettersToNames = {};
-    for (const column in res.locals.raw[res.locals.targetSheet]) {
-      if (column !== '!ref' && column !== '!merges!') {
-        let str = '';
-        for (let i = 0; i < column.length; i++) {
-          if (!+column[i]) {
-            str += column[i];
-            objColumnLettersToNames[
-              res.locals.raw[res.locals.targetSheet][column].w
-            ] = str;
-          }
-        }
-        arrOfColumnLetters.push(str);
-      }
-      if (arrOfColumnLetters.length === arrOfColumnNames.length) break;
-    }
-
-    // Gets table boundaries
-    const expectedData = data || sample;
-    const excelMap = { ...expectedData };
-    const arrOfColLettersSample = Object.values(expectedData);
-    const arrOfTableNames = Object.keys(expectedData);
-    for (let i = 0; i < arrOfColLettersSample.length; i++) {
-      if (arrOfColLettersSample[i + 1] === undefined) {
-        excelMap[arrOfTableNames[i]] = `${arrOfColLettersSample[i]}:${
-          arrOfColumnLetters[arrOfColumnLetters.length - 1]
-        }`.split(':');
-      } else {
-        excelMap[arrOfTableNames[i]] = `${
-          arrOfColLettersSample[i]
-        }:${String.fromCharCode(
-          arrOfColLettersSample[i + 1].charCodeAt() - 1
-        )}`.split(':');
-      }
-    }
-
-    for (const table in excelMap) {
-      for (let i = 0; i < excelMap[table].length; i++) {
-        let curr = excelMap[table][i];
-        let next = excelMap[table][i + 1];
-        if (curr && next) {
-          if (curr.charCodeAt() + 1 !== next.charCodeAt()) {
-            excelMap[table].splice(
-              i + 1,
-              0,
-              String.fromCharCode(curr.charCodeAt() + 1)
-            );
-          }
-        }
-      }
-    }
-    const columnMap = {};
-    res.locals.columnMap = columnMap;
-    for (const table in excelMap) {
-      for (const key in objColumnLettersToNames) {
-        if (excelMap[table].includes(objColumnLettersToNames[key])) {
-          columnMap[key] = table;
-        }
-      }
-    }
-
-    const rows = [];
-
-    const rowObject = {};
-    for (const tablenames of arrOfTableNames) {
-      rowObject[tablenames] = {};
-    }
-
-    for (const row of res.locals.inputRows) {
-      for (const columnName in row) {
-        rowObject[columnMap[columnName]][columnName] = row[columnName];
-      }
-      const newObj = JSON.parse(JSON.stringify(rowObject));
-      rows.push(newObj);
-    }
-    // ROWS IS OUR FINAL ROW DATA
-    res.locals.dataRows = rows;
-
-    // Rows contains objects for each entire row of data
-    // Array that contains each row as an object
-    // console.log(res.locals.inputRows);
-    // You need an object with all table names as keys
-    // Add Corresponding keys to the inputCols for each column found in inputRows
-    for (const column in res.locals.inputRows[0]) {
-      inputCols[column] = [];
-    }
-    // Tranpose the data so that we have each data point for each column
-    // Iterate through our inputRows => This is an array of objects for each row
-    // Iterate through each property in the object and for matching column strings
-    // push the value into our input columns corresponding array
-    for (const column of res.locals.inputRows) {
-      for (const key in column) {
-        if (key === 'release_date') {
-          let dateString = column[key] + ' ';
-          inputCols[key].push(dateString);
-        } else inputCols[key].push(column[key]);
-      }
-    }
-    res.locals.inputCols = inputCols;
-
-    return next();
-  } catch (error) {
-    return next({
-      log: `Controller error in excelController.convertInputs: ${error}`,
-      status: 400,
-      message: { err: error },
-    });
-  }
-};
-
-excelController.getDataTypes = async (req, res, next) => {
-  console.log('entering excelController.getDataTypes');
-  // console.log(res.locals.inputCols['release_date']);
-  // traverse values in each col to deduce sql data type
-  // switch this to res.locals.inputCols
-  try {
-    res.locals.colTypes = {};
-
-    const getColType = (colArr) => {
-      // if data can coerce to date, date
-      // if any piece of data is a string, set to varchar and exit
-      // if there are conflicting data types, set to varchar and exit
-      // if data is all numbers, check against floor -> if all nums === their floor, int, else float
-      // if data is all t/f, bool
-      let tempType;
-      let numType;
-      for (let val of colArr) {
-        let currType;
-
-        // get type of current data point
-        if (!isNaN(Number(val))) currType = 'number';
-        else if (Date.parse(val)) currType = 'date';
-        else if (typeof val === 'boolean' || val === 'true' || val === 'false')
-          currType = 'boolean';
-        else currType = 'string';
-
-        // compare to tempType (set in previous iterations of switch statement below)
-        // if there are discrepancies default to string (varchar)
-        if (tempType && currType !== tempType) return 'VARCHAR(255)';
-
-        // further logic per type
-        switch (currType) {
-          case 'string':
-            return 'VARCHAR(255)';
-          case 'number':
-            tempType = 'number';
-            if (numType != 'float' && val === Math.floor(val)) {
-              numType = 'int';
-            } else {
-              numType = 'float';
-            }
-            break;
-          default:
-            tempType = currType;
-        }
-      }
-
-      if (tempType === 'number') return numType.toUpperCase();
-      return tempType.toUpperCase();
+    const getNormalizedData = (data, startLetter, endLetter) => {
+      endLetter = endLetter === undefined ? startLetter : endLetter;
+      // https://github.com/SheetJS/sheetjs/issues/728#issuecomment-314665126
+      let range = xlsx.utils.decode_range(data['!ref']);
+      range.s.c = xlsx.utils.decode_col(startLetter);
+      range.e.c = xlsx.utils.decode_col(endLetter);
+      const newRange = xlsx.utils.encode_range(range);
+      return xlsx.utils.sheet_to_json(data, {
+        header: 0,
+        defval: '',
+        range: newRange,
+      });
     };
 
-    for (let col in res.locals.inputCols) {
-      res.locals.colTypes[col] = getColType(res.locals.inputCols[col]);
-    }
-
     const sample = { People: 'A', Species: 'I', Movies: 'Q' };
-    const columnsArr = [];
-    let data;
-    if (req.body.document) data = JSON.parse(req.body.document);
+    let mapping;
+    // if (req.body.document) mapping = JSON.parse(req.body.document);
+    // TODO: Change back to line above
+    mapping = sample;
 
-    for (const key in data || sample) {
-      tempObj = {};
-      tempObj.tableName = key;
-      tempObj.columns = [];
-      for (const column in res.locals.colTypes) {
-        if (res.locals.columnMap[column] === key) {
-          tempObj.columns.push({ [column]: res.locals.colTypes[column] });
+    res.locals.dataByColumns = {};
+    res.locals.dataByRows = {};
+    res.locals.dataTypes = {};
+
+    for (const sheet in res.locals.raw) {
+      const data = res.locals.raw[sheet];
+
+      // Getting a sense of what the data boundaries in terms of column letters are
+      // Helps set up the ability to parse data by column or rows per DB table
+      const columnLetters = Object.keys(data)
+        .filter((letter) => isColumnNameRow(letter))
+        .map((letter) => cleanColumnLetter(letter));
+
+      if (columnLetters.length === 0) continue;
+
+      const tableToColumnMapping = {};
+      const dataByColumns = {};
+      const databyRows = {};
+      const dataTypes = [];
+
+      // construct DB table name to file column letter mapping
+      const tableNames = Object.keys(mapping);
+      for (let i = 0; i < tableNames.length; i++) {
+        const tableName = tableNames[i];
+        const currentLetter = mapping[tableName];
+        const startIndex = columnLetters.indexOf(currentLetter);
+        const nextLetter = mapping[tableNames[i + 1]];
+        if (nextLetter === undefined) {
+          tableToColumnMapping[tableName] = columnLetters.slice(startIndex);
+        } else {
+          const endIndex = columnLetters.indexOf(nextLetter);
+          if (endIndex === -1)
+            throw new Error(
+              `Cannot find table boundaries for table ${tableName}`
+            );
+          tableToColumnMapping[tableName] = columnLetters.slice(
+            startIndex,
+            endIndex
+          );
         }
       }
-      const newObj = JSON.parse(JSON.stringify(tempObj));
-      columnsArr.push(newObj);
-    }
-    for (const el of columnsArr) console.log(el.columns);
-    res.locals.output = columnsArr;
 
+      // Parse data by row and columns separately
+      // for examining the relationships between the data later
+      Object.keys(tableToColumnMapping).forEach((table) => {
+        const range = tableToColumnMapping[table];
+        // Rows
+        const jsonRowData = getNormalizedData(
+          data,
+          range[0],
+          range[range.length - 1]
+        );
+        databyRows[table] = jsonRowData;
+
+        // Columns
+        dataByColumnsPerTable = {};
+        dataTypePerTable = [];
+        range.forEach((letter) => {
+          const columnDataArray = getNormalizedData(data, letter);
+          let columnName;
+          const columnValues = [];
+          for (const obj of columnDataArray) {
+            const name = Object.keys(obj);
+            if (name.length !== 1)
+              throw new Error('Found unexpected number of names per cell.');
+            else if (columnName !== undefined && columnName !== name[0])
+              throw new Error(
+                'Found more than one column name values per column.'
+              );
+            else if (columnName === undefined) columnName = name[0];
+            const value = Object.values(obj);
+            if (value.length !== 1)
+              throw new Error('Found unexpected number of values per cell.');
+            columnValues.push(value[0]);
+          }
+          dataByColumnsPerTable[columnName] = columnValues;
+          const dataTypeObj = {};
+          dataTypeObj[columnName] = getColType(columnValues);
+          dataTypePerTable.push(dataTypeObj);
+        });
+        dataByColumns[table] = dataByColumnsPerTable;
+        dataTypes.push({ table: table, columns: dataTypePerTable });
+      });
+
+      res.locals.dataByColumns[sheet] = dataByColumns;
+      res.locals.dataByRows[sheet] = databyRows;
+      res.locals.dataTypes[sheet] = dataTypes;
+    }
+    if (
+      Object.keys(res.locals.dataByColumns).length !== 1 ||
+      Object.keys(res.locals.dataByRows).length !== 1 ||
+      Object.keys(res.locals.dataTypes).length !== 1
+    )
+      // Note that this is a front-end limitation, not the backend
+      throw new Error(
+        'Application currently does not support parsing more than one sheet per file.'
+      );
     return next();
   } catch (error) {
     return next({
-      log: `Controller error in excelController.getDataTypes: ${error}`,
+      log: `Controller error in excelController.processFile: ${error}`,
       status: 400,
       message: { err: error },
     });
   }
 };
 
-excelController.addIds = async (req, res, next) => {
+excelController.addIds = (_, res, next) => {
   console.log('entering excelController.addIds');
-
   try {
-    for (let obj of res.locals.output) {
-      // add id col to each table
-      obj.columns.unshift({
-        _id: {
-          primaryKey: true,
-          type: 'SERIAL',
-        },
+    for (const sheet in res.locals.dataTypes) {
+      res.locals.dataTypes[sheet].forEach((obj) => {
+        // add id col to each table
+        obj.columns.unshift({
+          _id: {
+            primaryKey: true,
+            type: 'SERIAL',
+          },
+        });
       });
     }
     return next();
@@ -278,47 +223,43 @@ excelController.addIds = async (req, res, next) => {
   }
 };
 
-excelController.calcUniqueRows = async (req, res, next) => {
+excelController.calcUniqueRows = (_, res, next) => {
   console.log('entering excelController.calcUniqueRows');
-
   try {
-    // can tableNames be passed in from another res.locals?
-    const tableNames = [];
-    for (let key in res.locals.dataRows[0]) {
-      tableNames.push(key);
-    }
+    res.locals.uniqueRowsInTables = {};
+    res.locals.uniqueRowsInTablePairs = {};
+    for (const sheet in res.locals.dataByRows) {
+      const rowsByTable = res.locals.dataByRows[sheet];
+      const tableNames = res.locals.dataTypes[sheet].map((obj) => obj.table);
 
-    // calculate the number of unique rows in each table
-    const uniqueRowsInTables = {};
-    for (let tableName of tableNames) {
-      const set = new Set();
-      for (let row of res.locals.dataRows) {
-        set.add(JSON.stringify(row[tableName]));
+      // calculate the number of unique rows in each table
+      const uniqueRowsInTables = {};
+      tableNames.forEach((tableName) => {
+        const set = new Set();
+        rowsByTable[tableName].forEach((row) => set.add(JSON.stringify(row)));
+        uniqueRowsInTables[tableName] = set.size;
+      });
+      res.locals.uniqueRowsInTables[sheet] = uniqueRowsInTables;
+
+      // returns an array of all combinations of 2 tables as we need to compare each table vs every other table
+      const tablePairs = new Iter(tableNames).combinations(2).toArray();
+
+      // calculate the number of unique rows in each combination of two tables
+      const uniqueRowsInTablePairs = {};
+      for (let [pair1, pair2] of tablePairs) {
+        const set = new Set();
+        // TODO: Check and make sure the lengths between pairs are the same
+        for (i = 0; i < rowsByTable[pair1].length; i++) {
+          const rowCopy = JSON.stringify(
+            Object.assign(rowsByTable[pair1][i], rowsByTable[pair2][i])
+          );
+          // add copied row to set
+          set.add(rowCopy);
+        }
+        uniqueRowsInTablePairs[`${[pair1, pair2]}`] = set.size;
       }
-      uniqueRowsInTables[tableName] = set.size;
+      res.locals.uniqueRowsInTablePairs[sheet] = uniqueRowsInTablePairs;
     }
-    res.locals.uniqueRowsInTables = uniqueRowsInTables;
-
-    // returns an array of all combinations of 2 tables as we need to compare each table vs every other table
-    const tablePairs = new Iter(tableNames).combinations(2).toArray();
-
-    // calculate the number of unique rows in each combination of two tables
-    const uniqueRowsInTablePairs = {};
-    for (let pair of tablePairs) {
-      const set = new Set();
-      for (let row of res.locals.dataRows) {
-        // get a stringified copy of the current row that only includes the col names in the selected table pair
-        const rowCopy = JSON.stringify(
-          pair.reduce((newRow, key) => ((newRow[key] = row[key]), newRow), {})
-        );
-
-        // add copied row to set
-        set.add(rowCopy);
-      }
-      uniqueRowsInTablePairs[pair] = set.size;
-    }
-    res.locals.uniqueRowsInTablePairs = uniqueRowsInTablePairs;
-
     return next();
   } catch (error) {
     return next({
@@ -329,90 +270,99 @@ excelController.calcUniqueRows = async (req, res, next) => {
   }
 };
 
-excelController.getRelationships = async (req, res, next) => {
+excelController.getRelationships = (_, res, next) => {
   console.log('entering excelController.getRelationships');
 
   try {
-    const relationships = [];
-    for (let pair in res.locals.uniqueRowsInTablePairs) {
-      const tables = pair.split(',');
-      const pairCount = res.locals.uniqueRowsInTablePairs[pair];
-      const leftTableCount = res.locals.uniqueRowsInTables[tables[0]];
-      const rightTableCount = res.locals.uniqueRowsInTables[tables[1]];
-      const tempObj = {};
+    // TODO: May need to confirm unique rows + in table pairs have the same sheets
+    for (const sheet in res.locals.uniqueRowsInTablePairs) {
+      const tablePairData = res.locals.uniqueRowsInTablePairs[sheet];
+      const rowData = res.locals.uniqueRowsInTables[sheet];
+      const dataTypeData = res.locals.dataTypes[sheet];
 
-      if (pairCount > leftTableCount && pairCount > rightTableCount) {
-        tempObj[tables[0]] = 'many';
-        tempObj[tables[1]] = 'many';
-        relationships.push(tempObj);
-      } else if (pairCount === leftTableCount && pairCount > rightTableCount) {
-        tempObj[tables[0]] = 'one';
-        tempObj[tables[1]] = 'many';
-        relationships.push(tempObj);
-      } else if (pairCount > leftTableCount && pairCount === rightTableCount) {
-        tempObj[tables[0]] = 'many';
-        tempObj[tables[1]] = 'one';
-        relationships.push(tempObj);
-      } else if (leftTableCount === rightTableCount) {
-        tempObj[tables[0]] = 'one';
-        tempObj[tables[1]] = 'one';
-        relationships.push(tempObj);
+      const relationships = [];
+      for (let pair in tablePairData) {
+        const tables = pair.split(',');
+        const pairCount = tablePairData[pair];
+        const leftTableCount = rowData[tables[0]];
+        const rightTableCount = rowData[tables[1]];
+        const tempObj = {};
+
+        if (pairCount > leftTableCount && pairCount > rightTableCount) {
+          tempObj[tables[0]] = 'many';
+          tempObj[tables[1]] = 'many';
+          relationships.push(tempObj);
+        } else if (
+          pairCount === leftTableCount &&
+          pairCount > rightTableCount
+        ) {
+          tempObj[tables[0]] = 'one';
+          tempObj[tables[1]] = 'many';
+          relationships.push(tempObj);
+        } else if (
+          pairCount > leftTableCount &&
+          pairCount === rightTableCount
+        ) {
+          tempObj[tables[0]] = 'many';
+          tempObj[tables[1]] = 'one';
+          relationships.push(tempObj);
+        } else if (leftTableCount === rightTableCount) {
+          tempObj[tables[0]] = 'one';
+          tempObj[tables[1]] = 'one';
+          relationships.push(tempObj);
+        }
       }
-    }
+      // adds foreign key to left table, which points to right table's primary key
+      const addForeignKey = (leftTableName, rightTableName) => {
+        for (let obj of dataTypeData) {
+          if (obj.table === leftTableName) {
+            foreignKeyObj = {};
+            foreignKeyObj[`${rightTableName}_id`] = {
+              linkedTable: `${rightTableName}._id`,
+              type: 'INT',
+            };
+            obj.columns.push(foreignKeyObj);
+          }
+        }
+      };
 
-    // adds foreign key to left table, which points to right table's primary key
-    const addForeignKey = (leftTableName, rightTableName) => {
-      for (let obj of res.locals.output) {
-        if (obj.tableName === leftTableName) {
-          foreignKeyObj = {};
-          foreignKeyObj[`${rightTableName}_id`] = {
-            linkedTable: `${rightTableName}._id`,
-            type: 'INT',
+      for (let relationship of relationships) {
+        const relType = new Set(Object.values(relationship));
+        const relTables = Object.keys(relationship);
+
+        // if relationship is one-many, left table becomes "one" and right table becomes "many"
+        if (relType.has('one') && relType.has('many')) {
+          let leftTableName;
+          let rightTableName;
+          for (let tableName in relationship) {
+            if (relationship[tableName] === 'one') leftTableName = tableName;
+            else rightTableName = tableName;
+          }
+
+          addForeignKey(leftTableName, rightTableName);
+        }
+
+        // if relationship is one-one, use the first table as the left table
+        // opportunity for improvement here - get user input on which table is the left table and/or let them update it after the fact and regenerate sql
+        else if (relType.has('one')) {
+          addForeignKey(relTables[0], relTables[1]);
+        }
+
+        // if relationship is many-many, add join table, then add both foreign keys to join table
+        else if (relType.has('many')) {
+          const joinTableName = `${relTables[0]}_${relTables[1]}`;
+          const joinTable = {
+            tableName: joinTableName,
+            columns: [{ _id: { primaryKey: true, type: 'SERIAL' } }],
           };
 
-          obj.columns.push(foreignKeyObj);
+          dataTypeData.push(joinTable);
+
+          addForeignKey(joinTableName, relTables[0]);
+          addForeignKey(joinTableName, relTables[1]);
         }
-      }
-    };
-
-    for (let relationship of relationships) {
-      const relType = new Set(Object.values(relationship));
-      const relTables = Object.keys(relationship);
-
-      // if relationship is one-many, left table becomes "one" and right table becomes "many"
-      if (relType.has('one') && relType.has('many')) {
-        let leftTableName;
-        let rightTableName;
-        for (let tableName in relationship) {
-          if (relationship[tableName] === 'one') leftTableName = tableName;
-          else rightTableName = tableName;
-        }
-
-        addForeignKey(leftTableName, rightTableName);
-      }
-
-      // if relationship is one-one, use the first table as the left table
-      // opportunity for improvement here - get user input on which table is the left table and/or let them update it after the fact and regenerate sql
-      else if (relType.has('one')) {
-        addForeignKey(relTables[0], relTables[1]);
-      }
-
-      // if relationship is many-many, add join table, then add both foreign keys to join table
-      else if (relType.has('many')) {
-        const joinTableName = `${relTables[0]}_${relTables[1]}`;
-        const joinTable = {
-          tableName: joinTableName,
-          columns: [{ _id: { primaryKey: true, type: 'SERIAL' } }],
-        };
-
-        res.locals.output.push(joinTable);
-
-        addForeignKey(joinTableName, relTables[0]);
-        addForeignKey(joinTableName, relTables[1]);
       }
     }
-
-    // res.json(res.locals.output)
     return next();
   } catch (error) {
     return next({

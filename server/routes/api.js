@@ -7,21 +7,20 @@ const parse = multer();
 // used in excelController.read
 const excelController = require('../controllers/excelController');
 
-router.get('/', (req, res) => { });
+router.get('/', (req, res) => {});
 router.post(
   '/',
   parse.any(),
   excelController.read,
-  excelController.convertInputs,
-  excelController.getDataTypes,
+  excelController.processFile,
   excelController.addIds,
   excelController.calcUniqueRows,
   excelController.getRelationships,
   (req, res) => {
-    res.json(res.locals.output)
+    res.json(res.locals.dataTypes);
   }
 );
-router.patch('/', (req, res) => { });
-router.delete('/', (req, res) => { });
+router.patch('/', (req, res) => {});
+router.delete('/', (req, res) => {});
 
 module.exports = router;
