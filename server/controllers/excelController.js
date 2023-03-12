@@ -64,7 +64,7 @@ excelController.read = (req, res, next) => {
   }
 };
 
-excelController.processFile = (_, res, next) => {
+excelController.processFile = (req, res, next) => {
   console.log('entering excelController.processFile');
   try {
     const cleanColumnLetter = (letter) => letter.replace(/[0-9]/g, '');
@@ -83,12 +83,7 @@ excelController.processFile = (_, res, next) => {
         range: newRange,
       });
     };
-
-    const sample = { People: 'A', Species: 'I', Movies: 'Q' };
-    let mapping;
-    // if (req.body.document) mapping = JSON.parse(req.body.document);
-    // TODO: Change back to line above
-    mapping = sample;
+    const mapping = JSON.parse(req.body.document);
 
     res.locals.dataByColumns = {};
     res.locals.dataByRows = {};

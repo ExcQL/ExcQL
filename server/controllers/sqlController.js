@@ -46,10 +46,13 @@ const composeSqlQuery = (input) => {
   return outputArray.join('\n\n');
 };
 
-sqlController.createSqlScript = (req, res, next) => {
-  // TODO: Where is the input storing in `res`?
+sqlController.createSqlScript = (_, res, next) => {
   try {
-    res.locals.sqlscript = composeSqlQuery(res.locals.output);
+    res.locals.sqlscripts = {};
+    for (const sheet in res.locals.dataTypes) {
+      const query = composeSqlQuery(res.locals.dataTypes[sheet]);
+      res.locals.sqlscripts[sheet] = query;
+    }
     return next();
   } catch (error) {
     return next({

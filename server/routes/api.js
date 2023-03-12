@@ -17,8 +17,20 @@ router.post(
   sqlController.addIds,
   sqlController.calcUniqueRows,
   sqlController.getRelationships,
-  (req, res) => {
-    res.json(res.locals.dataTypes);
+  sqlController.createSqlScript,
+  (_, res) => {
+    // This is somewhat of a workaround right now,
+    // since the front end can only technically handle one sheet within one file
+    // while the backend has the ability to handle multiple sheets
+    const keys = Object.keys(res.locals.dataTypes);
+    if (keys.length !== 1)
+      return res.status(400).json({
+        err: 'Expected data for one sheet only. Has the functionality changed?',
+      });
+    res.status(200).json({
+      diagram: res.locals.dataTypes[keys[0]],
+      script: res.locals.sqlscripts[keys[0]],
+    });
   }
 );
 router.patch('/', (req, res) => {});

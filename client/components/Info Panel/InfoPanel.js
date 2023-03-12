@@ -18,31 +18,31 @@ export const sortExcelColumnLetters = (array) => {
   return array.sort((objA, objB) => {
     const objAValues = Object.values(objA);
     const objBValues = Object.values(objB);
-    const isCorrectFormat = objAValues.length === 1 &&
+    const isCorrectFormat =
+      objAValues.length === 1 &&
       objBValues.length === 1 &&
       typeof objAValues[0] === 'string' &&
       typeof objBValues[0] === 'string';
-    if (!isCorrectFormat) throw new Error('Column letter not in correct format (expected "string").');
+    if (!isCorrectFormat)
+      throw new Error(
+        'Column letter not in correct format (expected "string").'
+      );
     const a = objAValues[0];
     const b = objBValues[0];
     if (a === b) throw new Error('No duplicate column letters allowed.');
     const lengthA = a.length;
     const lengthB = b.length;
-    if (
-      lengthA < lengthB ||
-      (a.length === b.length && a < b)
-    ) return -1;
+    if (lengthA < lengthB || (a.length === b.length && a < b)) return -1;
     return 1;
   });
-}
+};
 
 export const sortTableToColumnMappingInput = (mapping) => {
   const columnToTableArray = mapping.reduce(
     (outputObj, { tableName, fileColumn }) => {
       if (tableName !== '' && fileColumn !== '') {
-        if (
-          outputObj.map(obj => Object.keys(obj)[0]).includes(tableName)
-        ) throw new Error('Duplicate table name found');
+        if (outputObj.map((obj) => Object.keys(obj)[0]).includes(tableName))
+          throw new Error('Duplicate table name found');
         const mapping = {};
         mapping[tableName] = fileColumn;
         outputObj.push(mapping);
@@ -52,7 +52,7 @@ export const sortTableToColumnMappingInput = (mapping) => {
     []
   );
   return Object.assign({}, ...sortExcelColumnLetters(columnToTableArray));
-}
+};
 
 const InfoPanel = () => {
   const [mappingState, setMappingState] = useState(initialMappingState);
@@ -68,9 +68,7 @@ const InfoPanel = () => {
       excelFile.append('excel', files[0]);
       excelFile.append(
         'document',
-        JSON.stringify(
-          sortTableToColumnMappingInput(mappingState.mapping)
-        )
+        JSON.stringify(sortTableToColumnMappingInput(mappingState.mapping))
       );
       //SPECIFIC BACKEND ENDPOINT NEEDED TO MAKE PASSING REQUEST
       //TODO: Need to change fetch request URL
@@ -79,6 +77,7 @@ const InfoPanel = () => {
         body: excelFile,
       });
       const data = await response.json();
+      console.log(data);
       ctx.updateData(data);
       if (uploadError) setUploadError(false);
     } catch (error) {
@@ -113,30 +112,30 @@ const InfoPanel = () => {
   };
 
   return (
-    <section className="info-panel">
-      <h1 className="info-panel__main-heading">ExcQL</h1>
-      <p className="info-panel__description">
+    <section className='info-panel'>
+      <h1 className='info-panel__main-heading'>ExcQL</h1>
+      <p className='info-panel__description'>
         Translating excel files to SQL script is as easy as 1, 2, 3!
       </p>
-      <form className="info-panel__upload-form" onSubmit={uploadExcelHandler}>
-        <span className="info-panel__steps">
+      <form className='info-panel__upload-form' onSubmit={uploadExcelHandler}>
+        <span className='info-panel__steps'>
           <strong>Step 1:</strong> Upload your file
         </span>
-        <label className="upload-form--container">
+        <label className='upload-form--container'>
           <input
-            type="file"
-            id="files"
-            name="files"
-            accept=".xls, .xlsx"
+            type='file'
+            id='files'
+            name='files'
+            accept='.xls, .xlsx'
             onChange={handleUploadFile}
           />
-          <RiFolderUploadFill className="info-panel__upload-icon" />
-          <span id="file-name"></span>
+          <RiFolderUploadFill className='info-panel__upload-icon' />
+          <span id='file-name'></span>
         </label>
-        <span className="info-panel__steps">
+        <span className='info-panel__steps'>
           <strong>Step 2:</strong> Declare file columns to SQL tables mapping
         </span>
-        <p className="info-panel__instructions">
+        <p className='info-panel__instructions'>
           How would you like your information to split into separate tables?
           Open your file in Excel. Put in the column letter that corresponds to
           the start of a table under "Column Letter", and then input a table
@@ -148,7 +147,7 @@ const InfoPanel = () => {
             mappings are considered.
           </b>
         </p>
-        <div className="mapping-input--container">
+        <div className='mapping-input--container'>
           <header>
             <span>Table Name</span>
             <span>Column Letter</span>
@@ -160,22 +159,22 @@ const InfoPanel = () => {
               handleInputChange={handleInputChange}
             />
           ))}
-          <button id="more-inputs" onClick={handleMoreInputClick}>
+          <button id='more-inputs' onClick={handleMoreInputClick}>
             Add More
           </button>
         </div>
-        <span className="info-panel__steps">
+        <span className='info-panel__steps'>
           <strong>Step 3:</strong> Upload the file and watch magic happen!
         </span>
         <div>
           {uploadError && (
-            <p className="info-panel__error">
+            <p className='info-panel__error'>
               Uh oh! 😭 Upload failed. Please try again.
             </p>
           )}
         </div>
-        <div className="upload-form--container">
-          <button type="submit" className="info-panel__upload-btn">
+        <div className='upload-form--container'>
+          <button type='submit' className='info-panel__upload-btn'>
             Upload!
           </button>
         </div>
@@ -187,18 +186,18 @@ const InfoPanel = () => {
 const MappingInput = (props) => {
   const { id, handleInputChange } = props;
   return (
-    <div className="input-container">
+    <div className='input-container'>
       <input
         id={id}
-        name="tableName"
-        type="text"
+        name='tableName'
+        type='text'
         onChange={handleInputChange}
         required={id === 0}
       />
       <input
         id={id}
-        name="fileColumn"
-        type="text"
+        name='fileColumn'
+        type='text'
         onChange={handleInputChange}
         required={id === 0}
       />
