@@ -87,23 +87,16 @@ sqlController.addIds = (_, res, next) => {
   }
 };
 
-sqlController.calcUniqueRows = (_, res, next) => {
+sqlController.calcUniqueRowsInTablePairs = (_, res, next) => {
   console.log('entering sqlController.calcUniqueRows');
+  // unique rows by table is calculated in `excelController.processFile`
+  // when the rows are initially parsed by `xlsx.utils.sheet_to_json`
+  // to reduce the number of iterations required to generate the data
   try {
-    res.locals.uniqueRowsInTables = {};
     res.locals.uniqueRowsInTablePairs = {};
     for (const sheet in res.locals.dataByRows) {
       const rowsByTable = res.locals.dataByRows[sheet];
       const tableNames = res.locals.dataTypes[sheet].map((obj) => obj.table);
-
-      // calculate the number of unique rows in each table
-      const uniqueRowsInTables = {};
-      tableNames.forEach((tableName) => {
-        const set = new Set();
-        rowsByTable[tableName].forEach((row) => set.add(JSON.stringify(row)));
-        uniqueRowsInTables[tableName] = set.size;
-      });
-      res.locals.uniqueRowsInTables[sheet] = uniqueRowsInTables;
 
       // returns an array of all combinations of 2 tables as we need to compare each table vs every other table
       const tablePairs = new Iter(tableNames).combinations(2).toArray();

@@ -15,7 +15,7 @@ router.post(
   excelController.read,
   excelController.processFile,
   sqlController.addIds,
-  sqlController.calcUniqueRows,
+  sqlController.calcUniqueRowsInTablePairs,
   sqlController.getRelationships,
   sqlController.createSqlScript,
   (_, res) => {

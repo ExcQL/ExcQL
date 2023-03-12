@@ -2,46 +2,39 @@ const xlsx = require('xlsx'); // xlsx read/write parser
 
 const excelController = {};
 
-const getColType = (colArr) => {
+const getColType = (val, expectedDataType) => {
   // if data can coerce to date, date
   // if any piece of data is a string, set to varchar and exit
   // if there are conflicting data types, set to varchar and exit
   // if data is all numbers, check against floor -> if all nums === their floor, int, else float
   // if data is all t/f, bool
-  let tempType;
-  let numType;
-  for (let val of colArr) {
-    let currType;
-    // get type of current data point
-    if (!isNaN(Number(String(val)))) currType = 'number';
-    else if (Date.parse(val)) currType = 'date';
-    else if (typeof val === 'boolean' || val === 'true' || val === 'false')
-      currType = 'boolean';
-    else currType = 'string';
 
-    // compare to tempType (set in previous iterations of switch statement below)
-    // if there are discrepancies default to string (varchar)
-    if (tempType && currType !== tempType) return 'VARCHAR(255)';
+  const expectedType = expectedDataType
+    ? expectedDataType.toLowerCase()
+    : expectedDataType;
+  const INT = 'int';
+  const FLOAT = 'float';
+  const expectedNumberType = [INT, FLOAT];
+  let currType;
+  // get type of current data point
+  if (!isNaN(Number(String(val))))
+    currType = expectedType !== FLOAT && val === Math.floor(val) ? INT : FLOAT;
+  else if (Date.parse(val)) currType = 'date';
+  else if (typeof val === 'boolean' || val === 'true' || val === 'false')
+    currType = 'boolean';
+  else currType = 'string';
 
-    // further logic per type
-    switch (currType) {
-      case 'string':
-        return 'VARCHAR(255)';
-      case 'number':
-        tempType = 'number';
-        if (numType != 'float' && val === Math.floor(val)) {
-          numType = 'int';
-        } else {
-          numType = 'float';
-        }
-        break;
-      default:
-        tempType = currType;
-    }
-  }
-
-  if (tempType === 'number') return numType.toUpperCase();
-  return tempType.toUpperCase();
+  if (
+    expectedType &&
+    expectedNumberType.includes(expectedType) &&
+    expectedNumberType.includes(currType)
+  )
+    // Numbers can vary between `INT` and `FLOAT`, and there is logic above that handles current + expected comparison
+    return currType.toUpperCase();
+  else if ((expectedType && currType !== expectedType) || currType === 'string')
+    // if there are discrepancies that is not int/float, default to string (varchar)
+    return 'VARCHAR(255)';
+  else return currType.toUpperCase();
 };
 
 excelController.read = (req, res, next) => {
@@ -85,9 +78,9 @@ excelController.processFile = (req, res, next) => {
     };
     const mapping = JSON.parse(req.body.document);
 
-    res.locals.dataByColumns = {};
     res.locals.dataByRows = {};
     res.locals.dataTypes = {};
+    res.locals.uniqueRowsInTables = {};
 
     for (const sheet in res.locals.raw) {
       const data = res.locals.raw[sheet];
@@ -100,13 +93,9 @@ excelController.processFile = (req, res, next) => {
 
       if (columnLetters.length === 0) continue;
 
-      const tableToColumnMapping = {};
-      const dataByColumns = {};
-      const databyRows = {};
-      const dataTypes = [];
-
       // construct DB table name to file column letter mapping
       const tableNames = Object.keys(mapping);
+      const tableToColumnMapping = {};
       for (let i = 0; i < tableNames.length; i++) {
         const tableName = tableNames[i];
         const currentLetter = mapping[tableName];
@@ -128,25 +117,35 @@ excelController.processFile = (req, res, next) => {
       }
 
       // Parse data by row and columns separately
+      // and calculate the number of unique rows in each table
       // for examining the relationships between the data later
+      const databyRows = {};
+      const dataTypes = [];
+      const uniqueRowsCount = {};
       Object.keys(tableToColumnMapping).forEach((table) => {
         const range = tableToColumnMapping[table];
+
         // Rows
+        const uniqueRows = new Set();
         const jsonRowData = getNormalizedData(
           data,
           range[0],
           range[range.length - 1]
         );
+        jsonRowData.forEach((row) => uniqueRows.add(JSON.stringify(row)));
+        uniqueRowsCount[table] = uniqueRows.size;
         databyRows[table] = jsonRowData;
 
-        // Columns
-        dataByColumnsPerTable = {};
+        // Columns - primarily for checking data types
         dataTypePerTable = [];
         range.forEach((letter) => {
-          const columnDataArray = getNormalizedData(data, letter);
           let columnName;
-          const columnValues = [];
-          for (const obj of columnDataArray) {
+          let expectedDataType;
+          // Get the column data of a given letter, then look through
+          // each object ({<column name> : <cell value>}) to determine
+          // column name and data type of the cell value
+          getNormalizedData(data, letter).forEach((obj) => {
+            // column name
             const name = Object.keys(obj);
             if (name.length !== 1)
               throw new Error('Found unexpected number of names per cell.');
@@ -155,26 +154,25 @@ excelController.processFile = (req, res, next) => {
                 'Found more than one column name values per column.'
               );
             else if (columnName === undefined) columnName = name[0];
+
+            // cell value
             const value = Object.values(obj);
             if (value.length !== 1)
               throw new Error('Found unexpected number of values per cell.');
-            columnValues.push(value[0]);
-          }
-          dataByColumnsPerTable[columnName] = columnValues;
+            expectedDataType = getColType(value[0], expectedDataType);
+          });
           const dataTypeObj = {};
-          dataTypeObj[columnName] = getColType(columnValues);
+          dataTypeObj[columnName] = expectedDataType;
           dataTypePerTable.push(dataTypeObj);
         });
-        dataByColumns[table] = dataByColumnsPerTable;
         dataTypes.push({ table: table, columns: dataTypePerTable });
       });
-
-      res.locals.dataByColumns[sheet] = dataByColumns;
+      res.locals.uniqueRowsInTables[sheet] = uniqueRowsCount;
       res.locals.dataByRows[sheet] = databyRows;
       res.locals.dataTypes[sheet] = dataTypes;
     }
     if (
-      Object.keys(res.locals.dataByColumns).length !== 1 ||
+      Object.keys(res.locals.uniqueRowsInTables).length !== 1 ||
       Object.keys(res.locals.dataByRows).length !== 1 ||
       Object.keys(res.locals.dataTypes).length !== 1
     )
