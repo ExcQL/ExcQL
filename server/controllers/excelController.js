@@ -12,9 +12,8 @@ const getColType = (colArr) => {
   let numType;
   for (let val of colArr) {
     let currType;
-
     // get type of current data point
-    if (!isNaN(Number(val))) currType = 'number';
+    if (!isNaN(Number(String(val)))) currType = 'number';
     else if (Date.parse(val)) currType = 'date';
     else if (typeof val === 'boolean' || val === 'true' || val === 'false')
       currType = 'boolean';
