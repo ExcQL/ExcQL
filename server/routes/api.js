@@ -8,7 +8,11 @@ const parse = multer();
 const excelController = require('../controllers/excelController');
 const { sqlController } = require('../controllers/sqlController');
 
-router.get('/', (req, res) => {});
+const sendNotImplementedResponse = (res) =>
+  res.status(501).send('API not implemented.');
+
+router.get('/', (_, res) => sendNotImplementedResponse(res));
+
 router.post(
   '/',
   parse.any(),
@@ -33,7 +37,8 @@ router.post(
     });
   }
 );
-router.patch('/', (req, res) => {});
-router.delete('/', (req, res) => {});
+router.patch('/', (_, res) => sendNotImplementedResponse(res));
+
+router.delete('/', (_, res) => sendNotImplementedResponse(res));
 
 module.exports = router;
