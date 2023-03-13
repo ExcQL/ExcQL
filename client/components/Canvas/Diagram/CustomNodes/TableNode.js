@@ -28,13 +28,13 @@ const TableNode = ({ data }) => {
   const { tableData } = data;
 
   useEffect(() => {
+    const columns = [];
     tableData.columns.forEach((column, i) => {
       const [[columnName, other]] = Object.entries(column);
       const columnDataType = other.type || other;
       const isPrimaryKey = other.primaryKey || false;
       const linkTo = other.linkedTable || null;
-      setColumns((prev) => [
-        ...prev,
+      columns.push(
         <Column
           key={`C${i}`}
           columnName={columnName}
@@ -42,10 +42,10 @@ const TableNode = ({ data }) => {
           columnDataType={columnDataType}
           isPrimaryKey={isPrimaryKey}
           linkTo={linkTo}
-        />,
-      ]);
+        />
+      );
       if (linkTo) {
-        const sourceTable = tableData.tableName;
+        const sourceTable = tableData.table;
         const sourceColumn = columnName;
         const [targetTable, targetColumn] = linkTo.split(`.`);
 
@@ -58,13 +58,14 @@ const TableNode = ({ data }) => {
         });
       }
     });
-  }, []);
+    setColumns(columns);
+  }, [tableData]);
 
   return (
-    <div className="table-node" style={containerStyle}>
-      <div className="table-node__container">
-        <div style={tableHeading}>{tableData.tableName}</div>
-        <div className="table-node__columns-container">{columns}</div>
+    <div className='table-node' style={containerStyle}>
+      <div className='table-node__container'>
+        <div style={tableHeading}>{tableData.table}</div>
+        <div className='table-node__columns-container'>{columns}</div>
       </div>
     </div>
   );

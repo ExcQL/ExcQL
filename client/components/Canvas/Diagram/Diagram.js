@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useState, useCallback } from 'react';
-import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
+import ReactFlow, { Background, Controls } from 'reactflow';
 import {
   applyEdgeChanges,
   applyNodeChanges,
@@ -21,9 +21,13 @@ const Diagram = ({ tables, activeTab }) => {
   const [edges, setEdges] = useState([]);
 
   useEffect(() => {
+    // We need to reset edges or else old edges from previous render
+    // can stick around, resulting in incorrect edges
+    setEdges([]);
+    const nodes = [];
     tables.forEach((tableData, i) => {
-      const newNode = {
-        id: tableData.tableName,
+      nodes.push({
+        id: tableData.table,
         position: { x: i * 300, y: 0 },
         data: {
           tableData,
@@ -32,15 +36,10 @@ const Diagram = ({ tables, activeTab }) => {
           },
         },
         type: `tableNode`,
-      };
-
-      setNodes((prev) => {
-        return [...prev, newNode];
       });
     });
+    setNodes(nodes);
   }, [tables]);
-
-  const initialEdges = [];
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),

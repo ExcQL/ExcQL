@@ -11,9 +11,12 @@ const Canvas = ({ activeTab }) => {
   const ctx = useContext(store);
 
   return (
-    <section className="canvas">
+    <section className='canvas'>
       <Script activeTab={activeTab} />
-      <Diagram tables={ctx.uploadedData.diagram || []} activeTab={activeTab} />
+      <Diagram
+        tables={ctx.uploadedData ? ctx.uploadedData.diagram : []}
+        activeTab={activeTab}
+      />
     </section>
   );
 };
