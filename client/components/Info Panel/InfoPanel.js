@@ -81,13 +81,18 @@ const InfoPanel = () => {
         body: excelFile,
       });
       const data = await response.json();
-      console.log(data);
-      ctx.updateData(data);
+      if (response.status === 200) {
+        ctx.updateData(data);
+      } else {
+        // TODO: Potentially change error message depending on the error
+        setUploadError(true);
+      }
       setIsLoading(false);
       if (uploadError) setUploadError(false);
     } catch (error) {
       console.error(error);
       setUploadError(true);
+      setIsLoading(false);
     }
   };
 

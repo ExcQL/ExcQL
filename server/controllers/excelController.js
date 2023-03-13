@@ -101,13 +101,17 @@ excelController.processFile = (req, res, next) => {
         const currentLetter = mapping[tableName];
         const startIndex = columnLetters.indexOf(currentLetter);
         const nextLetter = mapping[tableNames[i + 1]];
-        if (nextLetter === undefined) {
+        if (startIndex === -1)
+          throw new RangeError(
+            `Table '${tableName}' with starting column '${currentLetter}' not in range.`
+          );
+        else if (nextLetter === undefined) {
           tableToColumnMapping[tableName] = columnLetters.slice(startIndex);
         } else {
           const endIndex = columnLetters.indexOf(nextLetter);
           if (endIndex === -1)
-            throw new Error(
-              `Cannot find table boundaries for table ${tableName}`
+            throw new RangeError(
+              `Cannot find end table boundary for table '${tableName}'. Please check table to column name mapping.`
             );
           tableToColumnMapping[tableName] = columnLetters.slice(
             startIndex,
