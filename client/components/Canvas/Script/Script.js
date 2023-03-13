@@ -1,18 +1,21 @@
-import React, { useRef } from 'react';
+import React, { useContext, useRef } from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { TbClipboardCopy } from 'react-icons/tb';
-import { DUMMY_SQL_SCRIPT } from '../../../assets/sqlScriptDummyData';
+import store from '../../context/store';
 
 import './Script.css';
 
 const scriptStyle = {
-  padding: '2rem',
+  padding: '3rem 5rem 3rem 3rem',
+  height: '60vh',
+  overflowY: 'scroll',
 };
 
 const Script = ({ activeTab }) => {
   const codeRef = useRef();
   const copiedRef = useRef();
+  const { uploadedData } = useContext(store);
 
   const clickHandler = () => {
     const currentText = codeRef.current.innerText;
@@ -27,19 +30,21 @@ const Script = ({ activeTab }) => {
 
   return (
     <div className={`script ${activeTab === `script` ? `active-script` : ``}`}>
-      <div className="script__script-container" ref={codeRef}>
+      <div className='script__script-container' ref={codeRef}>
         <SyntaxHighlighter
-          language="pgsql"
+          language='pgsql'
           style={docco}
           wrapLongLines={true}
           customStyle={scriptStyle}
         >
-          {DUMMY_SQL_SCRIPT}
+          {uploadedData === null
+            ? 'Upload a file and we will generate the script for you!'
+            : uploadedData.script}
         </SyntaxHighlighter>
-        <button className="script__copy-btn" onClick={clickHandler}>
+        <button className='script__copy-btn' onClick={clickHandler}>
           <TbClipboardCopy />
         </button>
-        <span ref={copiedRef} className="script__copied-text">
+        <span ref={copiedRef} className='script__copied-text'>
           Copied!
         </span>
       </div>

@@ -41,10 +41,12 @@ export const sortTableToColumnMappingInput = (mapping) => {
   const columnToTableArray = mapping.reduce(
     (outputObj, { tableName, fileColumn }) => {
       if (tableName !== '' && fileColumn !== '') {
-        if (outputObj.map((obj) => Object.keys(obj)[0]).includes(tableName))
+        const name = tableName.toLowerCase();
+        const column = fileColumn.toUpperCase();
+        if (outputObj.map((obj) => Object.keys(obj)[0]).includes(name))
           throw new Error('Duplicate table name found');
         const mapping = {};
-        mapping[tableName] = fileColumn;
+        mapping[name] = column;
         outputObj.push(mapping);
       }
       return outputObj;
@@ -79,12 +81,18 @@ const InfoPanel = () => {
         body: excelFile,
       });
       const data = await response.json();
-      ctx.updateData(data);
+      if (response.status === 200) {
+        ctx.updateData(data);
+      } else {
+        // TODO: Potentially change error message depending on the error
+        setUploadError(true);
+      }
       setIsLoading(false);
       if (uploadError) setUploadError(false);
     } catch (error) {
       console.error(error);
       setUploadError(true);
+      setIsLoading(false);
     }
   };
 
@@ -114,30 +122,30 @@ const InfoPanel = () => {
   };
 
   return (
-    <section className="info-panel">
-      <h1 className="info-panel__main-heading">ExcQL</h1>
-      <p className="info-panel__description">
+    <section className='info-panel'>
+      <h1 className='info-panel__main-heading'>ExcQL</h1>
+      <p className='info-panel__description'>
         Translating excel files to SQL script is as easy as 1, 2, 3!
       </p>
-      <form className="info-panel__upload-form" onSubmit={uploadExcelHandler}>
-        <span className="info-panel__steps">
+      <form className='info-panel__upload-form' onSubmit={uploadExcelHandler}>
+        <span className='info-panel__steps'>
           <strong>Step 1:</strong> Upload your file
         </span>
-        <label className="upload-form--container">
+        <label className='upload-form--container'>
           <input
-            type="file"
-            id="files"
-            name="files"
-            accept=".xls, .xlsx"
+            type='file'
+            id='files'
+            name='files'
+            accept='.xls, .xlsx'
             onChange={handleUploadFile}
           />
-          <RiFolderUploadFill className="info-panel__upload-icon" />
-          <span id="file-name"></span>
+          <RiFolderUploadFill className='info-panel__upload-icon' />
+          <span id='file-name'></span>
         </label>
-        <span className="info-panel__steps">
+        <span className='info-panel__steps'>
           <strong>Step 2:</strong> Declare file columns to SQL tables mapping
         </span>
-        <p className="info-panel__instructions">
+        <p className='info-panel__instructions'>
           How would you like your information to split into separate tables?
           Open your file in Excel. Put in the column letter that corresponds to
           the start of a table under "Column Letter", and then input a table
@@ -149,7 +157,7 @@ const InfoPanel = () => {
             mappings are considered.
           </b>
         </p>
-        <div className="mapping-input--container">
+        <div className='mapping-input--container'>
           <header>
             <span>Table Name</span>
             <span>Column Letter</span>
@@ -161,27 +169,27 @@ const InfoPanel = () => {
               handleInputChange={handleInputChange}
             />
           ))}
-          <button id="more-inputs" onClick={handleMoreInputClick}>
+          <button id='more-inputs' onClick={handleMoreInputClick}>
             Add More
           </button>
         </div>
-        <span className="info-panel__steps">
+        <span className='info-panel__steps'>
           <strong>Step 3:</strong> Upload the file and watch magic happen!
         </span>
         <div>
           {uploadError && (
-            <p className="info-panel__error">
+            <p className='info-panel__error'>
               Uh oh! 😭 Upload failed. Please try again.
             </p>
           )}
         </div>
         {isLoading && (
-          <div className="info-panel__spinner-container">
-            <div className="lds-dual-ring"></div>
+          <div className='info-panel__spinner-container'>
+            <div className='lds-dual-ring'></div>
           </div>
         )}
-        <div className="upload-form--container">
-          <button type="submit" className="info-panel__upload-btn">
+        <div className='upload-form--container'>
+          <button type='submit' className='info-panel__upload-btn'>
             Upload!
           </button>
         </div>
@@ -193,18 +201,18 @@ const InfoPanel = () => {
 const MappingInput = (props) => {
   const { id, handleInputChange } = props;
   return (
-    <div className="input-container">
+    <div className='input-container'>
       <input
         id={id}
-        name="tableName"
-        type="text"
+        name='tableName'
+        type='text'
         onChange={handleInputChange}
         required={id === 0}
       />
       <input
         id={id}
-        name="fileColumn"
-        type="text"
+        name='fileColumn'
+        type='text'
         onChange={handleInputChange}
         required={id === 0}
       />

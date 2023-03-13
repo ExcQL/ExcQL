@@ -16,17 +16,17 @@ app.use(morgan('dev'));
 // Routes any /api calls to api router
 app.use('/api', router);
 
-app.use('/', (req, res) => {
+app.use('/', (_, res) => {
   res.json({ message: `Hello from Express:${PORT}` });
 });
 
 // Handler for catch all and sends 404 response
-app.use((req, res) =>
+app.use((_, res) =>
   res.status(404).send("This is not the page you're looking for. ¯\\_(ツ)_/¯")
 );
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, _, res, __) => {
   const defaultErr = {
     log: 'Express error handler caught unknown middleware error',
     status: 500,

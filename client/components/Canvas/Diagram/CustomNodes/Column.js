@@ -24,15 +24,15 @@ const Column = ({ columnName, columnDataType, isPrimaryKey, linkTo }) => {
   return (
     <div style={column}>
       {isPrimaryKey && !linkTo && (
-        <Handle type="target" position="left" id={columnName} />
+        <Handle type='target' position='left' id={columnName} />
       )}
 
       <div style={columnData}>
-        <p className="name">{columnName}</p>
-        <p className="data-type">{columnDataType}</p>
+        <p className='name'>{columnName}</p>
+        <p className='data-type'>{columnDataType}</p>
       </div>
       {linkTo && !isPrimaryKey && (
-        <Handle type="source" position="right" id={columnName} />
+        <Handle type='source' position='right' id={columnName} />
       )}
     </div>
   );
