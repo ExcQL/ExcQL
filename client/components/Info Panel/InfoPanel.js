@@ -41,10 +41,12 @@ export const sortTableToColumnMappingInput = (mapping) => {
   const columnToTableArray = mapping.reduce(
     (outputObj, { tableName, fileColumn }) => {
       if (tableName !== '' && fileColumn !== '') {
-        if (outputObj.map((obj) => Object.keys(obj)[0]).includes(tableName))
+        const name = tableName.toLowerCase();
+        const column = fileColumn.toUpperCase();
+        if (outputObj.map((obj) => Object.keys(obj)[0]).includes(name))
           throw new Error('Duplicate table name found');
         const mapping = {};
-        mapping[tableName] = fileColumn;
+        mapping[name] = column;
         outputObj.push(mapping);
       }
       return outputObj;
