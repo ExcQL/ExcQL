@@ -57,6 +57,7 @@ export const sortTableToColumnMappingInput = (mapping) => {
 const InfoPanel = () => {
   const [mappingState, setMappingState] = useState(initialMappingState);
   const [uploadError, setUploadError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const ctx = useContext(store);
 
   const uploadExcelHandler = async (e) => {
@@ -72,6 +73,7 @@ const InfoPanel = () => {
       );
       //SPECIFIC BACKEND ENDPOINT NEEDED TO MAKE PASSING REQUEST
       //TODO: Need to change fetch request URL
+      setIsLoading(true);
       const response = await fetch(`/api`, {
         method: 'POST',
         body: excelFile,
@@ -79,6 +81,7 @@ const InfoPanel = () => {
       const data = await response.json();
       console.log(data);
       ctx.updateData(data);
+      setIsLoading(false);
       if (uploadError) setUploadError(false);
     } catch (error) {
       console.error(error);
@@ -173,6 +176,11 @@ const InfoPanel = () => {
             </p>
           )}
         </div>
+        {isLoading && (
+          <div className='info-panel__spinner-container'>
+            <div className='lds-dual-ring'></div>
+          </div>
+        )}
         <div className='upload-form--container'>
           <button type='submit' className='info-panel__upload-btn'>
             Upload!

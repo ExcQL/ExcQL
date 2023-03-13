@@ -30,11 +30,7 @@ const Script = ({ activeTab }) => {
 
   return (
     <div className={`script ${activeTab === `script` ? `active-script` : ``}`}>
-      <div
-        className='script__script-container'
-        onClick={clickHandler}
-        ref={codeRef}
-      >
+      <div className='script__script-container' ref={codeRef}>
         <SyntaxHighlighter
           language='pgsql'
           style={docco}
@@ -45,7 +41,7 @@ const Script = ({ activeTab }) => {
             ? 'Upload a file and we will generate the script for you!'
             : uploadedData.script}
         </SyntaxHighlighter>
-        <button className='script__copy-btn'>
+        <button className='script__copy-btn' onClick={clickHandler}>
           <TbClipboardCopy />
         </button>
         <span ref={copiedRef} className='script__copied-text'>

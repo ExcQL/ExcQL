@@ -38,7 +38,7 @@ const Diagram = ({ tables, activeTab }) => {
         return [...prev, newNode];
       });
     });
-  }, []);
+  }, [tables]);
 
   const initialEdges = [];
 
